@@ -151,7 +151,6 @@ MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.abspath('/opt/data')
 STATICFILES_DIRS = [
     os.path.join(BASE_DIR, "static"),
-    '/var/www/static/',
 ]
 
 
