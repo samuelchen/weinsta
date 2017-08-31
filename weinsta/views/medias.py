@@ -13,13 +13,13 @@ log = logging.getLogger(__name__)
 
 
 @method_decorator(login_required, name='dispatch')
-class MediaView(TemplateView, BaseViewMixin):
+class MediasView(TemplateView, BaseViewMixin):
 
     def get(self, request, *args, **kwargs):
-        return super(MediaView, self).get(request, *args, **kwargs)
+        return super(MediasView, self).get(request, *args, **kwargs)
 
     def get_context_data(self, **kwargs):
-        context = super(MediaView, self).get_context_data(**kwargs)
+        context = super(MediasView, self).get_context_data(**kwargs)
 
         # request = self.request
         # user = request.user

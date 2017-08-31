@@ -12,8 +12,8 @@
                 <li class="nav-item {% if request.path == '/' %}active{% endif %}">
                     <a class="nav-link" href="{% url 'index' %}">{% trans "Home" %} <span class="sr-only">(current)</span></a>
                 </li>
-                <li class="nav-item {% if request.path == '/media/' %}active{% endif %}">
-                    <a class="nav-link" href="{% url 'media' %}">{% trans "Media" %}</a>
+                <li class="nav-item {% if request.path == '/medias/' %}active{% endif %}">
+                    <a class="nav-link" href="{% url 'medias' %}">{% trans "Medias" %}</a>
                 </li>
                 <li class="nav-item {% if request.path == '/author/' %}active{% endif %}">
                     <a class="nav-link" href="{% url 'author' %}">{% trans "Author" %}</a>
