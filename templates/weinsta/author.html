@@ -1,0 +1,28 @@
+{% extends "base.html" %}{% load staticfiles i18n %}
+
+{% block head_title %}Authors{% endblock %}
+
+{% block extra_head %}
+{% endblock %}
+
+{% block content %}
+
+    <div class="row pl-1">
+    {% for author in authors %}
+        <div class="col-lg-3 col-md-4 mt-2">
+            <div class="card" {# style="width: 15rem;" #}>
+                <img class="card-img-top rounded-circle ml-2 mt-2" style="width: 5rem; height: 5rem" src="{{ author.picture.url }}" alt="{{ author.username }}">
+
+                <div class="card-body small">
+                    <h4 class="card-title">{{ author.fullname }}</h4>
+                    <p class="card-text">{{ author.username }}@{{ author.provider }}</p>
+                    <p class="card-text">{{ author.bio|default_if_none:"&nbsp;" }}</p>
+
+                    <a href="{{ author.website }}" target="_blank" class="btn btn-primary {% if not author.website %}disabled{% endif %}">Website</a>
+                </div>
+            </div>
+        </div>
+    {% endfor %}
+    </div>
+
+{% endblock %}

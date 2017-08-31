@@ -1,3 +1,10 @@
+.idea
+*.sqlite3
+setting/dev.py
+data
+temp
+weinsta/migrations
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
