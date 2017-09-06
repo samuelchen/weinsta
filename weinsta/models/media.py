@@ -18,7 +18,7 @@ UserMode = get_user_model()
 
 
 class SocialProviders(object):
-    INSTAGRAM = 'instgram'
+    INSTAGRAM = 'instagram'
     _texts = {
         INSTAGRAM: _('instagram'),
     }
@@ -127,6 +127,9 @@ class SocialUser(models.Model):
             ('provider', 'username')
         )
 
+    def __str__(self):
+        return self.fullname if self.fullname else self.username
+
 #
 # class Author(models.Model):
 #     id = models.BigAutoField(primary_key=True)
@@ -179,9 +182,9 @@ class Media(models.Model):
     rlink = models.TextField()
 
     # owner = models.CharField(max_length=100, help_text='owner username on instagram')
-    owner = models.OneToOneField(SocialUser, related_name='owner', null=True)
-    author = models.OneToOneField(SocialUser, related_name='author', null=True)
-    mentions = models.ManyToManyField(SocialUser, related_name='mentions', null=True)
+    owner = models.ForeignKey(SocialUser, related_name='owner', null=True)
+    author = models.ForeignKey(SocialUser, related_name='author', null=True)
+    mentions = models.ManyToManyField(SocialUser, related_name='mentions')
     # mentions = models.TextField(null=True, blank=True, help_text="Mentioned persons in JSON format")
     # authors = models.ManyToManyField(Author)
 

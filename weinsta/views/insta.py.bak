@@ -120,7 +120,7 @@ class InstaView(TemplateView, BaseViewMixin):
     def fetch_my_insta_favorites(self, commit=True):
         favorites = []
         endpoint = 'users/self/media/liked'
-        # result = self._invoke_insta(endpoint)
+        # result = self.invoke_insta(endpoint)
         result = open(os.path.join('./temp', 'favorites.json')).read()
         result = json.loads(result)
         if not result:

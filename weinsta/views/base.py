@@ -11,7 +11,9 @@ class BaseViewMixin(ContextMixin):
         context = super(BaseViewMixin, self).get_context_data(**kwargs)
 
         context['website'] = {
-            'name': _('WeInsta')
+            "domain": "bdgru.com",
+            "name": "BDGRU",
+            "fullname": _('Business Development Guru')
         }
 
         return context

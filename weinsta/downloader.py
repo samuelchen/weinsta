@@ -38,7 +38,7 @@ class InstagramMediaDownloader(MediaDownloader):
                              media_dict, user)
 
     @staticmethod
-    def fetch_media(media_dict, user):
+    def fetch_media(media_dict, user, cache_img=True):
         md = media_dict
         t = md['type']
 
@@ -46,8 +46,10 @@ class InstagramMediaDownloader(MediaDownloader):
 
         try:
             m = MEDIA_MODEL.objects.get(user=user, provider=SocialProviders.INSTAGRAM, rid=md['id'])
+            log.info('Updating media %s' % m.id)
         except MEDIA_MODEL.DoesNotExist:
             m = MEDIA_MODEL(user=user, provider=SocialProviders.INSTAGRAM, rid=md['id'])
+            log.info('Creating media for %s' % md['link'])
 
         m.type = MediaType.from_str(t)
         m.rlink = md['link']
@@ -55,20 +57,17 @@ class InstagramMediaDownloader(MediaDownloader):
         # m.provider = SocialProviders.INSTAGRAM
         # m.rid = media['id']
         m.rcode = InstagramMediaDownloader.get_insta_code_from_link(m.rlink)
-        m.created_at = timezone.datetime.utcfromtimestamp(int(md['created_time']))
+        m.created_at = timezone.make_aware(timezone.datetime.utcfromtimestamp(int(md['created_time'])))
         m.tags = md['tags']
-
-        # m.authors = self.convert_author(media['user'])
-
-        caption = md['caption']
-        if caption:
+        if md['caption']:
             m.text = md['caption'].get('text', None)
-            owner = md['caption'].get('from', None)
-            if owner:
-                m.owner = InstagramMediaDownloader.get_or_create_social_user(owner)
-                # by default author is owner
-                # TODO: check if a forwarded post to correct author
-                m.author = m.owner
+
+        owner = md['user']
+        if owner:
+            m.owner = InstagramMediaDownloader.get_or_create_social_user(owner)
+            # by default author is owner
+            # TODO: check if a forwarded post to correct author
+            m.author = m.owner
 
         loc = md['location']
         if loc:
@@ -92,7 +91,6 @@ class InstagramMediaDownloader(MediaDownloader):
                     InstagramMediaDownloader._download_media(file_field=m.thumb, url=url, filename=filename)
 
         m.rjson = json.dumps(md)
-        m.save()
 
         # many to many field must update after
         if m.pk:
@@ -100,6 +98,8 @@ class InstagramMediaDownloader(MediaDownloader):
                 ud = u['user']
                 su = InstagramMediaDownloader.get_or_create_social_user(u['user'])
                 m.mentions.add(su)
+
+        m.save()
 
         return m
 
@@ -110,16 +110,18 @@ class InstagramMediaDownloader(MediaDownloader):
         url = user_dict['profile_picture']
         provider = SocialProviders.INSTAGRAM
         u, created = SocialUser.objects.get_or_create(provider=provider, rid=rid)
+        log.info('%s social user: %s' % ('Creating new' if created else 'Updating', username))
+        u.username = username
+        u.fullname = user_dict['full_name']
         if not (u.picture and u.picture_url == url):
-            u.username = username
-            u.fullname = user_dict['full_name']
             u.picture_url = url
             file_ext = url[url.rindex('.'):]
             filename = username + file_ext
             filename = os.path.join(provider, filename)
             InstagramMediaDownloader._download_media(file_field=u.picture, url=url, filename=filename)
-            u.save()
+            log.debug('Social user picture downloaded. %s' % u.picture)
 
+        u.save()
         return u
 
 
@@ -130,7 +132,7 @@ class InstagramMediaDownloader(MediaDownloader):
 
     @staticmethod
     def _download_media(file_field, url, filename=None, delete_if_exists=True):
-        log.debug('Downloading %s' % url)
+        log.debug('Downloading %s to %s' % (url, filename))
         r = requests.get(url, stream=True, proxies=settings.PROXIES)
 
         if r.status_code != requests.codes.ok:

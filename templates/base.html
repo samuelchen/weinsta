@@ -4,13 +4,13 @@
 <head lang="{{ LANGUAGE_CODE|default:'en' }}">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no,shrink-to-fit=no" >
-    <title>{% block head_title %}{# TITLE BLOCK #}{% endblock %} {{ website.name }}</title>
+    <title>{% block head_title %}{# TITLE BLOCK #}{% endblock %} {{ website.fullname }}</title>
 
     {% block extra_head %}<!-- HEAD BLOCK -->{% endblock %}
 
 
     <link href="{% static 'font-awesome-4.7.0/css/font-awesome.min.css' %}" rel="stylesheet">
-{#    <link href="{% static 'weinsta/css/main.css' %}" rel="stylesheet">#}
+    <link href="{% static 'weinsta/css/main.css' %}" rel="stylesheet">
 
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-beta/css/bootstrap.min.css"
           integrity="sha384-/Y6pD6FV/Vv2HJnA6t+vslU6fwYXjCFtcEpHbNJ0lyAFsXTsjBbfaDjzALeQsN6M" crossorigin="anonymous">
@@ -28,30 +28,40 @@
 {% block body %}<!-- BODY BLOCK -->
     {% include 'weinsta/includes/topnavbar.html' %}
     {% include 'weinsta/includes/blank-div-row.html' %}
-    <div class="container">{% include 'weinsta/includes/django-messages-inc.html' %}</div>
+    <div class="container-fluid row">
 
-    <div class="container-fluid">{% block content %}<!-- CONTENT BLOCK -->{% endblock %}</div>
+            <div class="container">{% include 'weinsta/includes/django-messages-inc.html' %}</div>
+
+            <div class="container-fluid">{% block content %}<!-- CONTENT BLOCK -->{% endblock %}</div>
+    </div>
+
 {% endblock %}
 
 {% block extra_body %}<!-- EXTRA BODY BLOCK -->{% endblock %}
 
 {% block footer %}
-    <div class="modal-footer">
+    <footer class="footer mt-5 mr-2">
 {#        <i class="glyphicon glyphicon-copyright-mark"></i>#}
-        <ul class="list-inline">
+        <ul class="list-inline float-right">
             <li class="d-inline">© 2017 SamC, Studio. All rights reserved.</li>
             <li class="d-inline"><a href="#">Terms</a></li>
             <li class="d-inline"><a href="#">Privacy</a></li>
             <li class="d-inline"><a href="#">About</a></li>
         </ul>
-    </div>
+    </footer>
 {% endblock %}
 
-{% block script %}<!-- SCRIPT BLOCK -->{% endblock %}
+    <script>
+        $(document).ready(function(){
+            $('[data-toggle="tooltip"]').tooltip();
+        });
+    </script>
   <!-- Optional JavaScript -->
     <!-- jQuery first, then Popper.js, then Bootstrap JS -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.11.0/umd/popper.min.js" integrity="sha384-b/U6ypiBEHpOf/4+1nzFpr53nxSS+GLCkfwBdFNTxtclqqenISfwAzpKaMNFNmj4" crossorigin="anonymous"></script>
     <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-beta/js/bootstrap.min.js" integrity="sha384-h0AbiXch4ZDo7tp9hKZ4TsHbi047NrKGLO3SEJAg45jXxnGIfYzk4Si90RDIqNm1" crossorigin="anonymous"></script>
+
+{% block script %}<!-- SCRIPT BLOCK -->{% endblock %}
 
 </body>
 

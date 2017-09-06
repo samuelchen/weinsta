@@ -46,9 +46,10 @@ urlpatterns = [
     url(r'^accounts/', include('allauth.urls')),
 
     url(r'^$', views.IndexView.as_view(template_name=t('index.html')), name='index'),
-    url(r'^medias/$', views.MediasView.as_view(template_name=t('medias.html')), name='medias'),
+    url(r'^media/$', views.MediaView.as_view(template_name=t('media.html')), name='media'),
     url(r'^author/$', views.AuthorView.as_view(template_name=t('author.html')), name='author'),
     url(r'^insta/$', views.InstaView.as_view(template_name=t('insta.html')), name='insta'),
     url(r'^weibo/$', views. WeiboView.as_view(template_name=t('weibo.html')), name='weibo'),
+    url(r'^insta/loc/$', views.InstaLocView.as_view(), name='insta_loc'),
 
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

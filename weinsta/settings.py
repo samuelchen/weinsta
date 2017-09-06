@@ -45,6 +45,7 @@ INSTALLED_APPS = [
 
     'allauth.socialaccount.providers.instagram',
     'allauth.socialaccount.providers.weibo',
+    'allauth.socialaccount.providers.twitter',
 
     'weinsta',
 ]
@@ -147,7 +148,7 @@ SITE_ID = 1
 
 PROXIES = {}
 
-MEDIA_URL = '/media/'
+MEDIA_URL = '/m/'
 MEDIA_ROOT = os.path.abspath('/opt/data')
 STATICFILES_DIRS = [
     os.path.join(BASE_DIR, "static"),

@@ -55,6 +55,16 @@
         return s;
     };
 
+    // --- use comment for multil-lines string
+    // var tmpl = heredoc(function(){/*
+    //      your multi-lines string
+    //      goes to here.
+    //    */}
+    function heredoc(fn) {
+        return fn.toString().split('\n').slice(1,-1).join('\n') + '\n'
+    }
+
+
     // --- badge count change ---
     function badge_count(jq_obj, plus) {
         if (jq_obj.length <= 0)

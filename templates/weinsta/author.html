@@ -1,24 +1,65 @@
 {% extends "base.html" %}{% load staticfiles i18n %}
 
-{% block head_title %}Authors{% endblock %}
+{% block head_title %}{% trans "Author" %} - {% endblock %}
 
 {% block extra_head %}
 {% endblock %}
 
 {% block content %}
 
+    <div class="container">
+
+        <form class="form-inline mt-2 mt-md-0" method="get">
+{#            {% csrf_token %}#}
+            <div class="form-check form-control-sm">
+                <label class="form-check-label mr-sm-2">
+                    <input class="form-check" type="checkbox" name="artist" {% if filters.artist %}checked{% endif %}>
+                    artist
+                </label>
+                <label class="form-check-label mr-sm-2">
+                    <input class="form-check" type="checkbox" name="publisher" {% if filters.publisher %}checked{% endif %}>
+                    publisher
+                </label>
+                <label class="form-check-label mr-sm-2">
+                    <input class="form-check" type="checkbox" name="user" {% if filters.user %}checked{% endif %}>
+                    user
+                </label>
+            </div>
+            <input name="query" class="form-control form-control-sm mr-sm-2" type="text" placeholder="Name, Bio"
+                   value="{{ filters.query }}" aria-label="Search">
+            <button class="btn btn-outline-success btn-sm my-2 my-sm-0" type="submit">Search</button>
+        </form>
+    </div>
+
     <div class="row pl-1">
     {% for author in authors %}
         <div class="col-lg-3 col-md-4 mt-2">
             <div class="card" {# style="width: 15rem;" #}>
-                <img class="card-img-top rounded-circle ml-2 mt-2" style="width: 5rem; height: 5rem" src="{{ author.picture.url }}" alt="{{ author.username }}">
+                <div class="card-img-top">
+                    <img class="rounded ml-2 mt-2" style=" height: 5rem"
+                         src="{{ author.picture.url }}" alt="{{ author.username }}">
 
+{#                    <div class="media-body ml-1 mr-1">#}
+{#                        {% if author.is_artist %}<span class="badge badge-success" title="artist" data-toggle="tooltip"><i class="fa fa-id-badge"></i></span>{% endif %}#}
+{#                        {% if author.is_publisher %}<span class="badge badge-info" title="publisher" data-toggle="tooltip"><i class="fa fa-id-badge"></i></span>{% endif %}#}
+{#                        <a href="#"><span class="badge badge-secondary" title="@{{ author.username }}" data-toggle="tooltip"><i class="fa fa-{{ author.provider }}"></i></span></a>#}
+{#                    </div>#}
+                </div>
                 <div class="card-body small">
-                    <h4 class="card-title">{{ author.fullname }}</h4>
-                    <p class="card-text">{{ author.username }}@{{ author.provider }}</p>
-                    <p class="card-text">{{ author.bio|default_if_none:"&nbsp;" }}</p>
+                <div class="media">
+                    <h5 class="card-title">{{ author.fullname }}</h5>
 
-                    <a href="{{ author.website }}" target="_blank" class="btn btn-primary {% if not author.website %}disabled{% endif %}">Website</a>
+                                    <div class="media-body ml-1 mr-1">
+                        {% if author.is_artist %}<span class="badge badge-success" title="artist" data-toggle="tooltip"><i class="fa fa-id-badge"></i></span>{% endif %}
+                        {% if author.is_publisher %}<span class="badge badge-info" title="publisher" data-toggle="tooltip"><i class="fa fa-id-badge"></i></span>{% endif %}
+                        <a href="#"><span class="badge badge-secondary" title="@{{ author.username }}" data-toggle="tooltip"><i class="fa fa-{{ author.provider }}"></i></span></a>
+                    </div>
+                </div>
+                    <p class="card-text small">{{ author.bio|default_if_none:"&nbsp;" }}</p>
+
+                    {% if author.website %}<a href="{{ author.website }}" target="_blank" class="btn btn-outline-primary btn-sm">website</a>{% endif %}
+                    {% if author.media_set %}<a href="#" class="btn btn-outline-primary btn-sm">media</a>{% endif %}
+                    <a href="#" class="btn btn-outline-primary btn-sm"><i class="fa fa-gear"></i></a>
                 </div>
             </div>
         </div>

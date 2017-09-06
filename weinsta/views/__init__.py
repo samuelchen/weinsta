@@ -2,7 +2,7 @@
 # coding: utf-8
 
 from .index import IndexView
-from .medias import MediasView
+from .media import MediaView
 from .weibo import WeiboView
-from .insta import InstaView
+from .insta import InstaView, InstaLocView
 from .author import AuthorView
