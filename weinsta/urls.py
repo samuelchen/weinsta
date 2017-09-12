@@ -50,6 +50,9 @@ urlpatterns = [
     url(r'^author/$', views.AuthorView.as_view(template_name=t('author.html')), name='author'),
     url(r'^insta/$', views.InstaView.as_view(template_name=t('insta.html')), name='insta'),
     url(r'^weibo/$', views. WeiboView.as_view(template_name=t('weibo.html')), name='weibo'),
+    url(r'^twitter/$', views. TwitterView.as_view(template_name=t('twitter.html')), name='twitter'),
     url(r'^insta/loc/$', views.InstaLocView.as_view(), name='insta_loc'),
+
+    url(r'^pub/(?P<media_id>[0-9]+)/$', views.PubView.as_view(template_name=t('pub.html')), name='pub'),
 
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

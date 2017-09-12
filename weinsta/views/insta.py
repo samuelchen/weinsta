@@ -1,33 +1,30 @@
 #!/usr/bin/env python
 # coding: utf-8
-
+from django.urls import reverse
 
 from django.views.generic import TemplateView
 from django.http import JsonResponse, HttpResponse, Http404
 from django.conf import settings
-import requests
+from django.contrib.messages import error
+from django.utils.translation import ugettext as _
 from .base import BaseViewMixin
-from ..models import MediaType, SocialProviders, SocialUser, Media
+from ..models import MediaType, SocialProviders, SocialUser, Media, LikedMedia, MyMedia
 from allauth.socialaccount.models import SocialAccount, SocialToken, SocialApp
 
 import logging
 import os
 import simplejson as json
-from ..downloader import InstagramMediaDownloader
 from allauth.socialaccount.providers import registry
+from weinsta.clients import InstagramClient
 
 log = logging.getLogger(__name__)
 
-api_root = 'https://api.instagram.com/v1'
+# api_root = 'https://api.instagram.com/v1'
 
 
 class InstaView(TemplateView, BaseViewMixin):
 
-    downloader = InstagramMediaDownloader()
-
     def get(self, request, *args, **kwargs):
-        # medias = self.fetch_my_insta_favorites()
-
         return super(InstaView, self).get(request, *args, **kwargs)
 
     def post(self, request, *args, **kwargs):
@@ -36,61 +33,57 @@ class InstaView(TemplateView, BaseViewMixin):
     def get_context_data(self, **kwargs):
         context = super(InstaView, self).get_context_data(**kwargs)
 
+        token = self.get_my_insta_token(self.request)
+        if token:
+            client = InstagramClient(token=token)
+
+            def on_likes(likes):
+                for md in likes:
+                    m = client.save_media(md, self.request, cache_to_local=True)
+                    like, created = LikedMedia.objects.get_or_create(user=self.request.user, media=m)
+                    if created:
+                        like.save()
+
+            def on_my_medias(my_medias):
+                for md in my_medias:
+                    m = client.save_media(md, self.request, cache_to_local=True)
+                    mine, created = MyMedia.objects.get_or_create(user=self.request.user, media=m)
+                    if created:
+                        mine.save()
+
+            client.fetch_my_likes(callback=on_likes)
+            client.fetch_my_own_medias(callback=on_my_medias)
+
         req = self.request.GET
-        tab = req.get('tab', '1')
+        tab = req.get('tab', 'medias')
         context['tab'] = tab
 
-        if tab == '1':
-            # insta favorites
-            context['medias'] = Media.objects.all()
-        elif tab == '2':
+        if tab == 'medias':
+            context['medias'] = MyMedia.objects.filter(user=self.request.user).select_related('media')
+        elif tab == 'likes':
+            # my instagram likes
+            context['medias'] = LikedMedia.objects.filter(user=self.request.user).select_related('media')
+        elif tab == 'tags':
             # search tags
             pass
-        elif tab == '3':
+        elif tab == 'locations':
             # locations
             pass
 
+        context['mediatypes'] = MediaType
+
         return context
-
-    def search_insta_by_location(self):
-        pass
-
-    def search_insta_by_tag(self, tags):
-        pass
-
-    def search_insta_by_user(self, username):
-        pass
-
-    def fetch_my_insta_favorites(self):
-        favorites = []
-        endpoint = 'users/self/media/liked'
-        token = self.get_my_insta_token(self.request)
-        result = self.invoke_insta(endpoint, token=token)
-        # result = open(os.path.join('./temp', 'favorites.json')).read()
-        # result = json.loads(result)
-        if not result:
-            return []
-
-        if 'error' in result:
-            self.error(result['message'])
-            return []
-
-        for media in result['data']:
-            m = self.downloader.fetch_media(media, self.request.user)
-            favorites.append(m)
-
-        return favorites
 
     @staticmethod
     def get_my_insta_token(request):
-        insta_id = 'instagram'
+        # social_app_name = 'insta_test'
         token = None
         try:
-            provider = registry.by_id(insta_id, request)
+            provider = registry.by_id(SocialProviders.INSTAGRAM, request)
             log.debug('Provider is :' + str(provider))
             app = SocialApp.objects.get(provider=provider.id)
             acc = SocialAccount.objects.get(provider=provider.id, user=request.user)
-            token = SocialToken.objects.get(app=app, account=acc)
+            token = SocialToken.objects.get(app=app, account=acc).token
         except KeyError as err:
             log.exception('Instagram provider is not installed.', err)
         except SocialApp.DoesNotExist:
@@ -100,39 +93,12 @@ class InstaView(TemplateView, BaseViewMixin):
         except SocialToken.DoesNotExist:
             log.warn('Instagram token is not obtained. Login with Instagram first.')
 
-        # if token is None:
-        #     self.error('Token is not found. Check your registered APP and Instagram account.')
+        if token is None:
+            error(request, _('Token is not found. Check your registered APP or <a href="%s">re-connect</a> Instagram account.') % reverse('socialaccount_connections'))
 
         if settings.DEBUG:
             print(token)
         return token
-
-    @staticmethod
-    def invoke_insta(endpoint, token, **kwargs):
-        if '?' in endpoint:
-            url = '%s/%s&access_token=%s' % (api_root, endpoint, token)
-        else:
-            url = '%s/%s?access_token=%s' % (api_root, endpoint, token)
-        # url = '%s/%s' % (api_root, endpoint)
-        # if 'data' in kwargs:
-        #     kwargs['data']['access_token'] = token
-        # else:
-        #     kwargs['data'] = {
-        #         'access_token': token
-        #     }
-        r = requests.get(url, proxies=settings.PROXIES, **kwargs)
-        log.debug('%s invoking %s.' % (r.status_code, url))
-        log.debug(r.headers)
-        log.debug(r.content)
-        obj = r.json()
-        if 200 > r.status_code or r.status_code >= 400:
-            obj = {
-                "code": obj['meta']['code'],
-                "error": obj['meta']['error_type'],
-                "message": obj['meta']['error_message']
-            }
-            log.error('%d %s. "%s". %s' % (r.status_code, r.reason, endpoint, obj['message']))
-        return obj
 
 
 class InstaLocView(TemplateView, BaseViewMixin):

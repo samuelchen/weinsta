@@ -12,7 +12,8 @@
         <div class="">
             <div class="card mr-1" style="width: 12rem;">
                 <a href="#" class=" {% if media.type == mediatypes.VIDEO %}video{% endif %}">
-                <img class="card-img-top {% if media.type == mediatypes.VIDEO %}video{% endif %}" src="{{ media.thumb.url }}" alt="{{ media.text|default_if_none:'' }}">
+                <img class="card-img-top {% if media.type == mediatypes.VIDEO %}video{% endif %}"
+                     src="{{ media.thumb.url }}" alt="{{ media.text|default_if_none:'' }}">
                 </a>
                 <div class="card-body small">
                     <h6 class="card-title" title="{% trans "Media Owner" %}" data-toggle="tooltip">

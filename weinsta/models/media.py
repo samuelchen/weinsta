@@ -19,14 +19,28 @@ UserMode = get_user_model()
 
 class SocialProviders(object):
     INSTAGRAM = 'instagram'
+    TWITTER = 'twitter'
+    WEIBO = 'weibo'
     _texts = {
         INSTAGRAM: _('instagram'),
+        TWITTER: _('twitter'),
+        WEIBO: _('weibo'),
+    }
+    _icons = {
+        INSTAGRAM: 'fa fa-instagram',
+        TWITTER: 'fa fa-twitter',
+        WEIBO: 'fa fa-weibo',
     }
     Choices = _texts.items()
+    Icons = _icons.items()
 
     @classmethod
     def get_text(cls, code):
         return cls._texts.get(code)
+
+    @classmethod
+    def get_icon(cls, code):
+        return cls._icons.get(code)
 
 
 class MediaType(object):
@@ -130,46 +144,10 @@ class SocialUser(models.Model):
     def __str__(self):
         return self.fullname if self.fullname else self.username
 
-#
-# class Author(models.Model):
-#     id = models.BigAutoField(primary_key=True)
-#     social_user = models.
-#     social_accounts = models.TextField(help_text="Author's social accounts in JSON format", null=True, blank=True)
-#
-#     __social_accs = {}
-#
-#     class Meta:
-#         unique_together = (
-#             ('provider', 'rid'),
-#             ('provider', 'rusername')
-#         )
-#
-#
-#     # def gen_username(self, name=None):
-#     #     done = False
-#     #     while not done:
-#     #         try:
-#     #             self.username = name
-#     #             self.save()
-#     #             doen = True
-#     #         except Exception as err:
-#     #             log.error(err)
-#     #             name = '%s_%d' % (name, timezone.datetime.timestamp())
-#
-#     def social_accounts_dict(self):
-#         if not self.__social_accs:
-#             self.__social_accs = json.loads(self.social_accounts)
-#         return self.__social_accs
-#
-#     def set_social_account(self, provider, username, id=None):
-#         accs = self.social_accounts_dict()
-#         accs[provider]['username'] = username
-#         accs[provider]['id'] = id
-#         self.social_accounts = json.dumps(accs)
-#
-#     def get_social_account(self, provider):
-#         accs = self.social_accounts_dict()
-#         return accs.get(provider, None)
+
+class SysConfig(models.Model):
+    name = models.CharField(max_length=50, primary_key=True)
+    value = models.CharField(max_length=200)
 
 
 class Media(models.Model):
@@ -218,6 +196,18 @@ class Media(models.Model):
             ('provider', 'rid')
         )
         # abstract = True
+
+
+class MyMedia(models.Model):
+    id = models.BigAutoField(primary_key=True)
+    user = models.ForeignKey(UserMode)
+    media = models.ForeignKey(Media, related_name='media')
+
+
+class LikedMedia(models.Model):
+    id = models.BigAutoField(primary_key=True)
+    user = models.ForeignKey(UserMode)
+    media = models.ForeignKey(Media)
 
 
 # class MediaInstance(models.Model):

@@ -7,5 +7,7 @@ from .media import (
     MediaResolution,
     SocialProviders,
     SocialUser,
+    MyMedia,
+    LikedMedia,
 )
 from .admin import SocialUserAdmin

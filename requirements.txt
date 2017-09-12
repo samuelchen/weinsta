@@ -1,6 +1,7 @@
 django
 django-allauth
 requests
+oauth2
 termcolor
 simplejson
 Pillow>=4.0.0
