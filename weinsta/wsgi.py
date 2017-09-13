@@ -11,7 +11,7 @@ import os
 
 from django.core.wsgi import get_wsgi_application
 
-#os.environ.setdefault("DJANGO_SETTINGS_MODULEDJANGO_SETTINGS_MODULE", "weinsta.settings")
-os.environ.setdefault("DJANGO_SETTINGS_MODULEDJANGO_SETTINGS_MODULE", "setting.prod")
+#os.environ.setdefault("DJANGO_SETTINGS_MODULE", "weinsta.settings")
+os.environ.setdefault("DJANGO_SETTINGS_MODULE", "setting.prod")
 
 application = get_wsgi_application()
