@@ -1,11 +1,14 @@
 #!/usr/bin/env python
 # coding: utf-8
+from allauth.socialaccount.models import SocialApp, SocialAccount, SocialToken
+from allauth.socialaccount.providers import registry
 
 from .base import SocialClient
 from ..models import SocialProviders, SocialUser, Media, MediaType
 from django.conf import settings
 from django.contrib.messages import error
 from django.utils import timezone
+from django.utils.translation import ugettext as _
 import logging
 import os
 import simplejson as json
@@ -35,6 +38,31 @@ class InstagramClient(SocialClient):
     @property
     def token(self):
         return self._token
+
+    @staticmethod
+    def get_my_token(request):
+        token = None
+        try:
+            provider = registry.by_id(SocialProviders.INSTAGRAM, request)
+            log.debug('Provider is :' + str(provider))
+            app = SocialApp.objects.get(provider=provider.id)
+            acc = SocialAccount.objects.get(provider=provider.id, user=request.user)
+            token = SocialToken.objects.get(app=app, account=acc).token
+        except KeyError as err:
+            log.exception('Instagram provider is not installed.', err)
+        except SocialApp.DoesNotExist:
+            log.warn('Instagram app is not registered. Register it in admin console.')
+        except SocialAccount.DoesNotExist:
+            log.warn('Instagram account is not connected.')
+        except SocialToken.DoesNotExist:
+            log.warn('Instagram token is not obtained. Login with Instagram first.')
+
+        if token is None:
+            error(request, _('Token is not found. Check your registered APP or <a href="%s">re-connect</a> Instagram account.') % reverse('socialaccount_connections'))
+
+        if settings.DEBUG:
+            print(token)
+        return token
 
     def fetch_my_timeline(self, callback=None):
         all_medias = []
@@ -120,7 +148,7 @@ class InstagramClient(SocialClient):
 
         try:
             m = MEDIA_MODEL.objects.get(user=request.user, provider=SocialProviders.INSTAGRAM, rid=md['id'])
-            return m
+            # return m
             log.info('Updating media %s' % m.id)
         except MEDIA_MODEL.DoesNotExist:
             m = MEDIA_MODEL(user=request.user, provider=SocialProviders.INSTAGRAM, rid=md['id'])
@@ -185,8 +213,8 @@ class InstagramClient(SocialClient):
         url = user_dict['profile_picture']
         provider = SocialProviders.INSTAGRAM
         u, created = SocialUser.objects.get_or_create(provider=provider, rid=rid)
-        if not created:
-            return u
+        # if not created:
+        #     return u
         log.info('%s social user: %s' % ('Creating new' if created else 'Updating', username))
         u.username = username
         u.fullname = user_dict['full_name']

@@ -9,17 +9,13 @@ from django.contrib.messages import error
 from django.utils.translation import ugettext as _
 from .base import BaseViewMixin
 from ..models import MediaType, SocialProviders, SocialUser, Media, LikedMedia, MyMedia
-from allauth.socialaccount.models import SocialAccount, SocialToken, SocialApp
+from ..clients import InstagramClient
 
 import logging
 import os
 import simplejson as json
-from allauth.socialaccount.providers import registry
-from weinsta.clients import InstagramClient
 
 log = logging.getLogger(__name__)
-
-# api_root = 'https://api.instagram.com/v1'
 
 
 class InstaView(TemplateView, BaseViewMixin):
@@ -33,7 +29,7 @@ class InstaView(TemplateView, BaseViewMixin):
     def get_context_data(self, **kwargs):
         context = super(InstaView, self).get_context_data(**kwargs)
 
-        token = self.get_my_insta_token(self.request)
+        token = InstagramClient.get_my_token(self.request)
         if token:
             client = InstagramClient(token=token)
 
@@ -74,32 +70,6 @@ class InstaView(TemplateView, BaseViewMixin):
 
         return context
 
-    @staticmethod
-    def get_my_insta_token(request):
-        # social_app_name = 'insta_test'
-        token = None
-        try:
-            provider = registry.by_id(SocialProviders.INSTAGRAM, request)
-            log.debug('Provider is :' + str(provider))
-            app = SocialApp.objects.get(provider=provider.id)
-            acc = SocialAccount.objects.get(provider=provider.id, user=request.user)
-            token = SocialToken.objects.get(app=app, account=acc).token
-        except KeyError as err:
-            log.exception('Instagram provider is not installed.', err)
-        except SocialApp.DoesNotExist:
-            log.warn('Instagram app is not registered. Register it in admin console.')
-        except SocialAccount.DoesNotExist:
-            log.warn('Instagram account is not connected.')
-        except SocialToken.DoesNotExist:
-            log.warn('Instagram token is not obtained. Login with Instagram first.')
-
-        if token is None:
-            error(request, _('Token is not found. Check your registered APP or <a href="%s">re-connect</a> Instagram account.') % reverse('socialaccount_connections'))
-
-        if settings.DEBUG:
-            print(token)
-        return token
-
 
 class InstaLocView(TemplateView, BaseViewMixin):
 
@@ -114,21 +84,23 @@ class InstaLocView(TemplateView, BaseViewMixin):
         lng = req.get('lng', None)
 
         if lat and lng:
-            token = InstaView.get_my_insta_token(request)
-            url = 'locations/search?lat=%s&lng=%s' % (lat, lng)
-            obj = InstaView.invoke_insta(url, token)
-            print('resp:', obj)
+            token = InstagramClient.get_my_token(request)
+            if token:
+                client = InstagramClient(token=token)
+                url = 'locations/search?lat=%s&lng=%s' % (lat, lng)
+                obj = client.invoke(url, token)
+                print('resp:', obj)
 
-            if obj and 'data' in obj:
-                for loc in obj['data']:
-                    print('loc', loc['id'])
-                    url = 'locations/%s/media/recent' % loc['id']
-                    obj1 = InstaView.invoke_insta(url, token)
+                if obj and 'data' in obj:
+                    for loc in obj['data']:
+                        print('loc', loc['id'])
+                        url = 'locations/%s/media/recent' % loc['id']
+                        obj1 = client.invoke(url, token)
 
-                    if obj1:
-                        return JsonResponse(obj1)
-            elif 'error' in obj:
-                return HttpResponse(obj['message'], status=obj['code'])
+                        if obj1:
+                            return JsonResponse(obj1)
+                elif 'error' in obj:
+                    return HttpResponse(obj['message'], status=obj['code'])
 
         return Http404()
 

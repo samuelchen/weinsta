@@ -150,6 +150,7 @@ class SocialUser(models.Model):
         else:
             return self.picture_url
 
+
 class SysConfig(models.Model):
     name = models.CharField(max_length=50, primary_key=True)
     value = models.CharField(max_length=200)

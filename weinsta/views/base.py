@@ -18,19 +18,19 @@ class BaseViewMixin(ContextMixin):
 
         return context
 
-    def info(self, message, tags=''):
-        messages.info(request=self.request, message=message, extra_tags=tags)
-
-    def warn(self, message, tags=''):
-        messages.warning(request=self.request, message=message, extra_tags=tags)
-
-    def error(self, message, tags=''):
-        messages.error(request=self.request, message=message, extra_tags=tags)
-
-    def success(self, message, tags=''):
-        messages.success(request=self.request, message=message, extra_tags=tags)
-
-    def debug(self, message, tags=''):
-        messages.set_level(self.request, messages.DEBUG)
-        messages.debug(request=self.request, message=message, extra_tags=tags)
+    # def info(self, message, tags=''):
+    #     messages.info(request=self.request, message=message, extra_tags=tags)
+    #
+    # def warn(self, message, tags=''):
+    #     messages.warning(request=self.request, message=message, extra_tags=tags)
+    #
+    # def error(self, message, tags=''):
+    #     messages.error(request=self.request, message=message, extra_tags=tags)
+    #
+    # def success(self, message, tags=''):
+    #     messages.success(request=self.request, message=message, extra_tags=tags)
+    #
+    # def debug(self, message, tags=''):
+    #     messages.set_level(self.request, messages.DEBUG)
+    #     messages.debug(request=self.request, message=message, extra_tags=tags)
 
