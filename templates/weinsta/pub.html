@@ -13,7 +13,7 @@
 
                 <h6 class="card-header" title="{% trans "Media Owner" %}" data-toggle="tooltip">
                     <img class=" rounded-circle mr-1" style="width: 38px; height: 38px"
-                         src="{{ media.owner.picture.url }}">
+                         src="{{ media.owner.get_pic_url }}">
                     {{ media.owner|default_if_none:'Unknown' }}
                 </h6>
 

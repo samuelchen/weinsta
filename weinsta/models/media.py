@@ -144,6 +144,11 @@ class SocialUser(models.Model):
     def __str__(self):
         return self.fullname if self.fullname else self.username
 
+    def get_pic_url(self):
+        if self.picture is not None:
+            return self.picture.url
+        else:
+            return self.picture_url
 
 class SysConfig(models.Model):
     name = models.CharField(max_length=50, primary_key=True)
@@ -196,6 +201,12 @@ class Media(models.Model):
             ('provider', 'rid')
         )
         # abstract = True
+
+    def get_thumb_url(self):
+        if self.thumb is not None:
+            return self.thumb.url
+        else:
+            return self.thumb_url
 
 
 class MyMedia(models.Model):

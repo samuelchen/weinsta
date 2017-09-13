@@ -72,13 +72,13 @@
             <div class="card mr-2" style="width: 12rem;">
                 {% if media.type == mediatypes.VIDEO %}<a href="#" class="video">{% endif %}
                 <img class="card-img-top {% if media.type == mediatypes.VIDEO %}video{% endif %}"
-                     src="{% if media.thumb %}{{ media.thumb.url }}{% else %}{{ media.thumb_url }}{% endif %}" alt="{{ media.text|default_if_none:'' }}">
+                     src="{{ media.get_thumb_url }}" alt="{{ media.text|default_if_none:'' }}">
                 {% if media.type == mediatypes.VIDEO %}</a>{% endif %}
 
                 <div class="card-body small">
                     <h6 class="card-title" title="{% trans "Media Owner" %}" data-toggle="tooltip">
                         <img class=" rounded-circle mr-1" style="width: 1.3rem; height: 1.3rem"
-                         src="{{ media.owner.picture.url }}">
+                         src="{{ media.owner.get_pic_url }}">
                         {{ media.owner|default_if_none:'Unknown' }} <i class="fa fa-{{ media.owner.provider }}"></i>
                     </h6>
 
