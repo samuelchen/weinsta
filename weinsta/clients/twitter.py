@@ -4,7 +4,6 @@ from allauth.socialaccount.models import SocialAccount, SocialToken, SocialApp
 
 from .base import SocialClient
 from ..models import SocialProviders
-import requests
 from django.conf import settings
 from allauth.socialaccount.providers import registry
 from requests_oauthlib import OAuth1

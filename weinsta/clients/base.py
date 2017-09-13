@@ -120,74 +120,31 @@ class SocialClient(object, metaclass=abc.ABCMeta):
         return obj
 
     def download_async(self, url, filename=None, folder='./', file_field=None, delete_if_exists=True, callback=None):
-        """
-        Download a media file asynchronously
-        If file_field specified, argument 'folder' will be IGNORED. Will use 'file_field.upload_to'.
-        :return:
-        """
-
-        # TODO: handle BIG file
-
-        log.debug('Downloading %s to %s' % (url, filename))
-        r = requests.get(url, stream=True, proxies=self.proxies)
-
-        if r.status_code != requests.codes.ok:
-            log.error('%d %s. Downloading %s' % (r.status_code, r.reason, url))
-            return None
-
-        if not filename:
-            filename = url.split('/')[-1]
-
-        fullpath = os.path.join(self.download_root, file_field.upload_to if file_field else folder, filename)
-        fullpath = os.path.abspath(fullpath)
-        os.makedirs(os.path.dirname(fullpath), exist_ok=True)
-        if delete_if_exists:
-            if os.path.exists(fullpath):
-                try:
-                    os.remove(fullpath)
-                except Exception as err:
-                    log.exception(err)
-                    # then will auto rename
-
-        if file_field is not None:
-            file_field.save(filename, r.raw)
-        else:
-            try:
-                with open(fullpath, 'wb') as f:
-                    f.write(r.raw)
-            except Exception as err:
-                log.exception(err)
-                try:
-                    if os.path.exists(fullpath):
-                        os.remove(fullpath)
-                except:
-                    pass
-                return None
-
-        return fullpath
+        raise NotImplementedError
 
     def download(self, url, filename=None, folder='./', file_field=None, delete_if_exists=True):
         """
         Download a media file asynchronously
-        If file_field specified, argument 'folder' will be IGNORED. Will use 'file_field.upload_to'.
+        If file_field specified, argument 'folder' will be IGNORED. Will use 'file_field.field.upload_to'.
         :return:
         """
+        if not filename:
+            filename = url.split('/')[-1]
+
+        if file_field is not None:
+            folder = file_field.field.upload_to(file_field, filename) \
+                if callable(file_field.field.upload_to) else file_field.field.upload_to
+        fullpath = os.path.join(self.download_root, folder, filename)
+        fullpath = os.path.abspath(fullpath)
+        os.makedirs(os.path.dirname(fullpath), exist_ok=True)
 
         # TODO: handle BIG file
-
-        log.debug('Downloading %s to %s' % (url, filename))
+        log.debug('Downloading %s to %s' % (url, fullpath))
         r = requests.get(url, stream=True, proxies=self.proxies)
-
         if r.status_code != requests.codes.ok:
             log.error('%d %s. Downloading %s' % (r.status_code, r.reason, url))
             return None
 
-        if not filename:
-            filename = url.split('/')[-1]
-
-        fullpath = os.path.join(self.download_root, file_field.upload_to if file_field else folder, filename)
-        fullpath = os.path.abspath(fullpath)
-        os.makedirs(os.path.dirname(fullpath), exist_ok=True)
         if delete_if_exists:
             if os.path.exists(fullpath):
                 try:

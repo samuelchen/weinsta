@@ -9,5 +9,6 @@ from .media import (
     SocialUser,
     MyMedia,
     LikedMedia,
+    MediaInstance,
 )
 from .admin import SocialUserAdmin

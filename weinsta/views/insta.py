@@ -35,7 +35,7 @@ class InstaView(TemplateView, BaseViewMixin):
 
             def on_likes(likes):
                 for md in likes:
-                    m = client.save_media(md, self.request, cache_to_local=True)
+                    m = client.save_media(md, self.request, update_if_exists=False, cache_to_local=True)
                     like, created = LikedMedia.objects.get_or_create(user=self.request.user, media=m)
                     if created:
                         like.save()

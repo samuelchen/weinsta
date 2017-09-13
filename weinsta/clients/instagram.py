@@ -2,9 +2,10 @@
 # coding: utf-8
 from allauth.socialaccount.models import SocialApp, SocialAccount, SocialToken
 from allauth.socialaccount.providers import registry
+from django.urls import reverse
 
 from .base import SocialClient
-from ..models import SocialProviders, SocialUser, Media, MediaType
+from ..models import SocialProviders, SocialUser, Media, MediaType, MediaInstance, MediaResolution
 from django.conf import settings
 from django.contrib.messages import error
 from django.utils import timezone
@@ -140,7 +141,7 @@ class InstagramClient(SocialClient):
             on_result(r)
             return my_medias
 
-    def save_media(self, media_dict, request, cache_to_local=False):
+    def save_media(self, media_dict, request, update_if_exists=True, cache_to_local=False):
         md = media_dict
         t = md['type']
 
@@ -148,7 +149,8 @@ class InstagramClient(SocialClient):
 
         try:
             m = MEDIA_MODEL.objects.get(user=request.user, provider=SocialProviders.INSTAGRAM, rid=md['id'])
-            # return m
+            if not update_if_exists:
+                return m
             log.info('Updating media %s' % m.id)
         except MEDIA_MODEL.DoesNotExist:
             m = MEDIA_MODEL(user=request.user, provider=SocialProviders.INSTAGRAM, rid=md['id'])
@@ -164,10 +166,11 @@ class InstagramClient(SocialClient):
         m.tags = md['tags']
         if md['caption']:
             m.text = md['caption'].get('text', None)
+        m.rjson = json.dumps(md)
 
         owner = md['user']
         if owner and (not m.owner or m.owner.rid != md['user']['id']):
-            m.owner = self.save_author(owner)
+            m.owner = self.save_author(owner, cache_pic_to_local=cache_to_local)
             # by default author is owner
             # TODO: check if a forwarded post to correct author
             m.author = m.owner
@@ -183,49 +186,71 @@ class InstagramClient(SocialClient):
             if 'thumbnail' in md['images']:
                 img = md['images']['thumbnail']
                 url = img['url']
-                if m.thumb_url != url or not m.thumb or not hasattr(m.thumb, 'url'):
-                    m.thumb_url = url
-                    m.thumb_width = int(img['width'])
-                    m.thumb_height = int(img['height'])
-                    if cache_to_local:
-                        path = '%s/thumb' % request.user
+
+                if not m.thumb:
+                    m.thumb = MediaInstance.objects.create()
+
+                mi = m.thumb
+                mi.type = MediaType.PHOTO
+                mi.resolution = MediaResolution.THUMB
+                mi.origin_url = url
+                mi.width = int(img['width'])
+                mi.height = int(img['height'])
+                mi.save()
+
+                # if m.thumb_url != url:
+                #     m.thumb_url = url
+                #     m.thumb_width = int(img['width'])
+                #     m.thumb_height = int(img['height'])
+
+                if cache_to_local:
+                    if not (mi.instance and os.path.exists(mi.instance.path)):
                         file_ext = url[url.rindex('.'):]
                         filename = m.rcode + file_ext
-                        filename = os.path.join(path, filename)
-                        self.download(url=url, filename=filename, file_field=m.thumb)
+                        filename = os.path.join(m.get_instance_folder(mi), filename)
+                        self.download(url=url, filename=filename, file_field=mi.instance)
 
-        m.rjson = json.dumps(md)
 
         # many to many field must update after
         if m.pk:
             for u in md['users_in_photo']:
                 ud = u['user']
-                su = self.save_author(ud, cache_to_local)
+                su = self.save_author(ud, update_if_exists=update_if_exists, cache_pic_to_local=cache_to_local)
                 m.mentions.add(su)
 
         m.save()
 
         return m
 
-    def save_author(self, user_dict, cache_pic_to_local=False):
+    def save_author(self, user_dict, update_if_exists=True, cache_pic_to_local=False):
         rid = user_dict['id']
         username = user_dict['username']
         url = user_dict['profile_picture']
         provider = SocialProviders.INSTAGRAM
         u, created = SocialUser.objects.get_or_create(provider=provider, rid=rid)
-        # if not created:
-        #     return u
+        if not created and update_if_exists:
+            return u
         log.info('%s social user: %s' % ('Creating new' if created else 'Updating', username))
         u.username = username
         u.fullname = user_dict['full_name']
-        if not (u.picture and hasattr(u.picture, 'url') and u.picture_url == url):
-            u.picture_url = url
-            if cache_pic_to_local:
+        # if u.picture_url != url:
+        #     u.picture_url = url
+
+        if not u.picture:
+            u.picture = MediaInstance.objects.create()
+        mi = u.picture
+        mi.type = MediaType.PHOTO
+        mi.resolution = MediaResolution.ORIGIN
+        mi.origin_url = url
+        mi.save()
+
+        if cache_pic_to_local:
+            if not (mi.instance and os.path.exists(mi.instance.path)):
                 file_ext = url[url.rindex('.'):]
                 filename = username + file_ext
-                filename = os.path.join(provider, filename)
-                self.download(url=url, filename=filename, file_field=u.picture)
-                log.debug('Social user picture downloaded. %s' % u.picture)
+                filename = os.path.join(u.get_picture_folder(), filename)
+                self.download(url=url, filename=filename, file_field=mi.instance)
+                log.debug('Social user picture downloaded. %s' % mi)
 
         u.save()
         return u
