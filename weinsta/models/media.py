@@ -145,7 +145,7 @@ class SocialUser(models.Model):
         return self.fullname if self.fullname else self.username
 
     def get_pic_url(self):
-        if self.picture is not None:
+        if self.picture and hasattr(self.picture, 'url'):
             return self.picture.url
         else:
             return self.picture_url
@@ -203,7 +203,7 @@ class Media(models.Model):
         # abstract = True
 
     def get_thumb_url(self):
-        if self.thumb is not None:
+        if self.thumb and hasattr(self.thumb, 'url'):
             return self.thumb.url
         else:
             return self.thumb_url
