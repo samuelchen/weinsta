@@ -183,7 +183,7 @@ class InstagramClient(SocialClient):
             if 'thumbnail' in md['images']:
                 img = md['images']['thumbnail']
                 url = img['url']
-                if m.thumb_url != url or not m.thumb:
+                if m.thumb_url != url or not m.thumb or not hasattr(m.thumb, 'url'):
                     m.thumb_url = url
                     m.thumb_width = int(img['width'])
                     m.thumb_height = int(img['height'])
@@ -218,7 +218,7 @@ class InstagramClient(SocialClient):
         log.info('%s social user: %s' % ('Creating new' if created else 'Updating', username))
         u.username = username
         u.fullname = user_dict['full_name']
-        if not (u.picture and u.picture_url == url):
+        if not (u.picture and hasattr(u.picture, 'url') and u.picture_url == url):
             u.picture_url = url
             if cache_pic_to_local:
                 file_ext = url[url.rindex('.'):]

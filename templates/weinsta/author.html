@@ -37,7 +37,7 @@
             <div class="card" {# style="width: 15rem;" #}>
                 <div class="card-img-top">
                     <img class="rounded ml-2 mt-2" style=" height: 5rem"
-                         src="{{ author.picture.url }}" alt="{{ author.username }}">
+                         src="{{ author.get_pic_url }}" alt="{{ author.username }}">
 
 {#                    <div class="media-body ml-1 mr-1">#}
 {#                        {% if author.is_artist %}<span class="badge badge-success" title="artist" data-toggle="tooltip"><i class="fa fa-id-badge"></i></span>{% endif %}#}
