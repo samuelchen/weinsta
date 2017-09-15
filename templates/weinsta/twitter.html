@@ -61,6 +61,7 @@
     <!-- medias -->
     <div id="id_medias" class="row pl-1 mt-2">
     {% for m in medias %}
+        {% if m.entities.media %}
         <div class="col-lg-3">
             <div class="card mr-2" {# style="width: 12rem;" #}>
                 {% if m.entities.media %}<img class="card-img-top" src="{{ m.entities.media.0.media_url }}" >{% endif %}
@@ -79,6 +80,7 @@
                 </div>
             </div>
         </div>
+        {% endif %}
     {% endfor %}
     </div>
     <!-- media ends -->

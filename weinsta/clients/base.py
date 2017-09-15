@@ -5,7 +5,10 @@ import abc
 from concurrent.futures import ThreadPoolExecutor
 import os
 import logging
+from django.db import IntegrityError
 import requests
+from django.core.cache import cache
+from ..models import Media, MediaInstance, MediaResolution
 
 log = logging.getLogger(__name__)
 
@@ -17,6 +20,7 @@ class SocialClient(object, metaclass=abc.ABCMeta):
     __download_root = ''
     __proxies = None
     __executors = None
+    _token = None
 
     @property
     def api_root(self):
@@ -34,13 +38,18 @@ class SocialClient(object, metaclass=abc.ABCMeta):
     def proxies(self):
         return self.__proxies
 
+    @property
+    def token(self):
+        return self._token
+
     @abc.abstractmethod
-    def __init__(self, provider, api_root, download_root=None, proxies=None, *args, **kwargs):
+    def __init__(self, token, provider, api_root, download_root=None, proxies=None, *args, **kwargs):
         self.__provider = provider
         self.__api_root = api_root
         self.__download_root = download_root
         self.__proxies = proxies
         self.__executors = ThreadPoolExecutor(max_workers=2)
+        self._token = token
 
     @abc.abstractmethod
     def prepare_invoking(self, requests_session):
@@ -75,18 +84,30 @@ class SocialClient(object, metaclass=abc.ABCMeta):
 
         assert method in ['get', 'post', 'delete', 'update', 'option']
 
+        url = '%s/%s' % (self.api_root, endpoint)
+
+        cached_obj = cache.get((self.token, url))
+        if cached_obj:
+            log.debug('cache hit %s' % url)
+            if callback:
+                callback(cached_obj)
+            return
+        else:
+            log.debug('cache missed %s' % url)
+
         session = requests.Session()
         self.prepare_invoking(session)
-        url = '%s/%s' % (self.api_root, endpoint)
 
         def on_invoked_result(fu):
             r = fu.result(0.1)
             log.debug('%s invoking %s.' % (r.status_code, url))
             # log.debug(r.headers)
-            log.debug(r.content)
+            # log.debug(r.content)
             obj = r.json()
             if 200 > r.status_code or r.status_code >= 400:
                 log.error('%d %s. "%s". %s' % (r.status_code, r.reason, endpoint, obj))
+            else:
+                cache.set((self.token, url), obj)
             if callback:
                 callback(obj)
 
@@ -101,21 +122,31 @@ class SocialClient(object, metaclass=abc.ABCMeta):
 
         assert method in ['get', 'post', 'delete', 'update', 'option']
 
-        session = requests.Session()
-        self.prepare_invoking(session)
-
         if endpoint.startswith('http'):
             url = endpoint
         else:
             url = '%s/%s' % (self.api_root, endpoint)
+
+        cached_obj = cache.get((self.token, url))
+        if cached_obj:
+            log.debug('cache hit %s' % url)
+            return cached_obj
+        else:
+            log.debug('cache missed %s' % url)
+
+        session = requests.Session()
+        self.prepare_invoking(session)
+
         func = getattr(session, method.lower())
         r = func(url, proxies=self.proxies, **kwargs)
         log.debug('%s invoking %s.' % (r.status_code, url))
-        log.debug(r.headers)
-        log.debug(r.content)
+        # log.debug(r.headers)
+        # log.debug(r.content)
         obj = r.json()
         if 200 > r.status_code or r.status_code >= 400:
             log.error('%d %s. "%s". %s' % (r.status_code, r.reason, endpoint, obj))
+        else:
+            cache.set((self.token, url), obj)
 
         return obj
 
@@ -169,3 +200,37 @@ class SocialClient(object, metaclass=abc.ABCMeta):
                 return None
 
         return fullpath
+
+    def save_media_instance(self, media, url, media_type, resolution, width, height,
+                            update_if_exists=False, cache_to_local=False):
+
+        assert isinstance(media, Media)
+
+        m = media
+        url_hash = MediaInstance.calc_url_hash(url)
+        mi, created = MediaInstance.objects.get_or_create(url_hash=url_hash)
+
+        if created or update_if_exists:
+            log.debug('%s MediaInstance for %s (hash=%s)' % ('creating' if created else 'updating', url, url_hash))
+            mi.type = media_type
+            mi.resolution = resolution
+            mi.origin_url = url
+            mi.width = width
+            mi.height = height
+            try:
+                mi.save()
+            except IntegrityError as err:
+                log.error('%s media url "%s". Already existed (hash=%s)' % (
+                    '[create]' if created else '[updated]', url, url_hash))
+                log.exception(err)
+                return None
+
+        if cache_to_local:
+            if not (mi.instance and os.path.exists(mi.instance.path)):
+                file_ext = url[url.rindex('.'):]
+                filename = os.path.join(m.get_instance_folder(), MediaResolution.get_slug(resolution),
+                    m.rcode + file_ext)
+                self.download(url=url, filename=filename, file_field=mi.instance)
+                log.info('[Downloaded] %s' % mi)
+
+        return mi

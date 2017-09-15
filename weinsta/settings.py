@@ -217,3 +217,38 @@ LOGGING = {
         },
     },
 }
+
+CACHES = {
+    # 'default': {
+    #     'BACKEND': 'django.core.cache.backends.dummy.DummyCache',
+    #     'TIMEOUT': 600,     # seconds
+    #     'OPTIONS': {
+    #         'MAX_ENTRIES': 1000
+    #     }
+    # },
+    'default': {
+        'BACKEND': 'django.core.cache.backends.filebased.FileBasedCache',
+        'LOCATION': os.path.abspath(os.path.join(MEDIA_ROOT, 'cache')),
+        'TIMEOUT': 600,     # seconds
+        'OPTIONS': {
+            'MAX_ENTRIES': 1000
+        }
+    },
+    # # python manage.py createcachetable
+    # 'db': {
+    #     'BACKEND': 'django.core.cache.backends.db.DatabaseCache',
+    #     'LOCATION': 'weinsta_cache',
+    # },
+    # 'memcache': {
+    #     'BACKEND': 'django.core.cache.backends.memcached.MemcachedCache',
+    #     'LOCATION': [
+    #         '172.19.26.240:11211',
+    #         '172.19.26.242:11212',
+    #         '172.19.26.244:11213',
+    #     ]
+    # }
+}
+
+MIDDLEWARE.insert(0, 'django.middleware.cache.UpdateCacheMiddleware')
+MIDDLEWARE.append('django.middleware.cache.FetchFromCacheMiddleware')
+CACHE_MIDDLEWARE_SECONDS = 600

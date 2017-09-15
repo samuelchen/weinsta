@@ -24,4 +24,6 @@ class IndexView(TemplateView, BaseViewMixin):
         if token:
             client = InstagramClient(token=token)
             context['medias'] = client.fetch_my_timeline()
+            for md in context['medias']:
+                client.save_media(md, self.request, update_if_exists=False, cache_to_local=True)
         return context

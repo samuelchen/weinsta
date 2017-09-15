@@ -1,0 +1,163 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the PACKAGE package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: PACKAGE VERSION\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2017-09-14 12:31+0800\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"Language: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+
+#: .\templates\weinsta\author.html:3
+#: .\templates\weinsta\includes\topnavbar.html:19
+msgid "Author"
+msgstr ""
+
+#: .\templates\weinsta\includes\topnavbar.html:13
+#: .\templates\weinsta\index.html:3 .\templates\weinsta\pub.html:3
+msgid "Home"
+msgstr ""
+
+#: .\templates\weinsta\includes\topnavbar.html:16
+#: .\templates\weinsta\media.html:3
+msgid "Media"
+msgstr ""
+
+#: .\templates\weinsta\includes\topnavbar.html:22
+#: .\templates\weinsta\insta.html:3
+msgid "Instagram"
+msgstr ""
+
+#: .\templates\weinsta\includes\topnavbar.html:25
+#: .\templates\weinsta\twitter.html:3 .\templates\weinsta\twitter.html:76
+msgid "Twitter"
+msgstr ""
+
+#: .\templates\weinsta\includes\topnavbar.html:48
+msgid "Logout"
+msgstr ""
+
+#: .\templates\weinsta\includes\topnavbar.html:49
+msgid "Change password"
+msgstr ""
+
+#: .\templates\weinsta\includes\topnavbar.html:52
+msgid "Admin"
+msgstr ""
+
+#: .\templates\weinsta\includes\topnavbar.html:54
+msgid "Connect social accounts"
+msgstr ""
+
+#: .\templates\weinsta\includes\topnavbar.html:55
+msgid "Manage emails"
+msgstr ""
+
+#: .\templates\weinsta\includes\topnavbar.html:62
+msgid "Sign in/up"
+msgstr ""
+
+#: .\templates\weinsta\includes\topnavbar.html:66
+msgid "Sign in"
+msgstr ""
+
+#: .\templates\weinsta\includes\topnavbar.html:67
+msgid "Sign up"
+msgstr ""
+
+#: .\templates\weinsta\includes\topnavbar.html:69
+msgid "Forget password"
+msgstr ""
+
+#: .\templates\weinsta\index.html:17 .\templates\weinsta\insta.html:79
+#: .\templates\weinsta\media.html:19 .\templates\weinsta\pub.html:14
+#: .\templates\weinsta\twitter.html:69
+msgid "Media Owner"
+msgstr ""
+
+#: .\templates\weinsta\index.html:24 .\templates\weinsta\insta.html:86
+#: .\templates\weinsta\media.html:41 .\templates\weinsta\twitter.html:76
+msgid "View on"
+msgstr ""
+
+#: .\templates\weinsta\index.html:26 .\templates\weinsta\insta.html:88
+#: .\templates\weinsta\media.html:43 .\templates\weinsta\twitter.html:78
+msgid "View"
+msgstr ""
+
+#: .\templates\weinsta\insta.html:16
+msgid "My recent medias"
+msgstr ""
+
+#: .\templates\weinsta\insta.html:20
+msgid "My recent likes"
+msgstr ""
+
+#: .\templates\weinsta\insta.html:91
+msgid "Publish to ..."
+msgstr ""
+
+#: .\templates\weinsta\insta.html:93
+msgid "Publish"
+msgstr ""
+
+#: .\templates\weinsta\media.html:27
+msgid "Media Author (display only if owner is probably not the author)"
+msgstr ""
+
+#: .\templates\weinsta\media.html:33
+msgid "Mentioned/related people in media"
+msgstr ""
+
+#: .\templates\weinsta\pub.html:100
+msgid "You must specify at least 1 target platform to publish."
+msgstr ""
+
+#: .\weinsta\clients\instagram.py:62
+#, python-format
+msgid ""
+"Token is not found. Check your registered APP or <a href=\"%s\">re-connect</"
+"a> Instagram account."
+msgstr ""
+
+#: .\weinsta\models\media.py:29
+msgid "instagram"
+msgstr ""
+
+#: .\weinsta\models\media.py:30
+msgid "twitter"
+msgstr ""
+
+#: .\weinsta\models\media.py:31
+msgid "weibo"
+msgstr ""
+
+#: .\weinsta\models\media.py:56
+msgid "photo"
+msgstr ""
+
+#: .\weinsta\models\media.py:57
+msgid "video"
+msgstr ""
+
+#: .\weinsta\models\media.py:58
+msgid "audio"
+msgstr ""
+
+#: .\weinsta\views\base.py:16
+msgid "Business Development Guru"
+msgstr ""
+
+#: .\weinsta\views\pub.py:79
+msgid "You media is successfully post to Weibo."
+msgstr ""

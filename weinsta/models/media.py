@@ -7,9 +7,11 @@ from django.core.files.storage import FileSystemStorage
 from django.conf import settings
 import os
 from django.utils import timezone
-from django.utils.translation import pgettext_lazy, ugettext as _
+from django.utils.translation import pgettext_lazy as _p, ugettext_noop as _n, ugettext as _
 import simplejson as json
 import logging
+import hashlib
+
 
 log = logging.getLogger(__name__)
 # FS = FileSystemStorage(location=os.path.abspath(os.path.join(settings.MEDIA_ROOT, 'authors')))
@@ -23,7 +25,7 @@ class SocialProviders(object):
     TWITTER = 'twitter'
     WEIBO = 'weibo'
     _texts = {
-        UNKNOWN: _(''),
+        UNKNOWN: '',        #_(''),
         INSTAGRAM: _('instagram'),
         TWITTER: _('twitter'),
         WEIBO: _('weibo'),
@@ -47,18 +49,21 @@ class SocialProviders(object):
 
 
 class MediaType(object):
+    UNKNOWN = None
     PHOTO = 'photo'
     VIDEO = 'video'
     AUDIO = 'audio'
     _texts = {
+        UNKNOWN: _('unknown'),
         PHOTO: _('photo'),
         VIDEO: _('video'),
-        AUDIO: _('audio')
+        AUDIO: _('audio'),
     }
     _icons = {
-        PHOTO: 'glyphicon glyphicon-picture ',
-        VIDEO: 'glyphicon glyphicon-video',
-        AUDIO: 'glyphicon glyphicon-audio',
+        UNKNOWN: 'fa fa-unknonn',
+        PHOTO: 'fa fa-picture ',
+        VIDEO: 'fa fa-video',
+        AUDIO: 'fa fa-audio',
     }
     Choices = _texts.items()
     Icons = _icons.items()
@@ -78,8 +83,11 @@ class MediaType(object):
             return MediaType.PHOTO
         elif type_str in ['video', ]:
             return MediaType.VIDEO
+        elif type_str in ['audio', ]:
+            return MediaType.AUDIO
         else:
-            return None
+            log.warn('"%s" is unknown media type.' % type_str)
+            return MediaType.UNKNOWN
 
 
 class MediaResolution(object):
@@ -89,11 +97,16 @@ class MediaResolution(object):
     MID = 20
     HIGH = 30
     _texts = {
-        ORIGIN: pgettext_lazy('media resolution', 'origin'),
-        THUMB: pgettext_lazy('media resolution', 'thumb'),
-        LOW: pgettext_lazy('media resolution', 'low'),
-        MID: pgettext_lazy('media resolution', 'medium'),
-        HIGH: pgettext_lazy('media resolution', 'high'),
+        # ORIGIN: _n('media resolution', 'origin'),
+        # THUMB: _n('media resolution', 'thumb'),
+        # LOW: _n('media resolution', 'low'),
+        # MID: _n('media resolution', 'medium'),
+        # HIGH: _n('media resolution', 'high'),
+        ORIGIN: _n('origin'),
+        THUMB: _n('thumb'),
+        LOW: _n('low'),
+        MID: _n('medium'),
+        HIGH: _n('high'),
     }
     _icons = {
         ORIGIN: 'fa fa-origin',
@@ -107,6 +120,10 @@ class MediaResolution(object):
 
     @classmethod
     def get_text(cls, code):
+        return _(cls._texts.get(code))
+
+    @classmethod
+    def get_slug(cls, code):
         return cls._texts.get(code)
 
     @classmethod
@@ -138,6 +155,7 @@ class MediaInstance(models.Model):
     # thumb = models.ImageField(storage=FS, null=True, blank=True, help_text='Thumbnail picture')
     instance = models.FileField(storage=FS, null=True, blank=True, help_text='Media instance storage')
     origin_url = models.TextField(null=True, blank=True)
+    url_hash = models.CharField(max_length=50, unique=True, db_index=True)
 
     height = models.IntegerField(null=True, blank=True)
     width = models.IntegerField(null=True, blank=True)
@@ -145,9 +163,23 @@ class MediaInstance(models.Model):
     # extra_data = models.TextField(help_text='extra data in JSON format', null=True, blank=True)
 
     def __str__(self):
-        return '%s (%s %s %dx%d) from %s' % (os.path.join(self.instance.path, self.instance.name),
-                                             self.type, MediaResolution.get_text(self.resolution),
-                                             self.width or 0, self.height or 0, self.origin_url)
+        return '<%s> %s (%s %s %dx%d) from %s (%s)' % (
+            self.__class__.__name__,
+            os.path.join(self.instance.path, self.instance.name) if self.instance else '<path:none>', self.type,
+            MediaResolution.get_text(self.resolution), self.width or 0, self.height or 0, self.origin_url,
+            self.url_hash)
+
+    @staticmethod
+    def calc_url_hash(url):
+        md5 = hashlib.md5()
+        md5.update(url.encode())
+        return md5.hexdigest()
+
+    def save(self, force_insert=False, force_update=False, using=None,
+             update_fields=None):
+        self.url_hash = MediaInstance.calc_url_hash(self.origin_url if self.origin_url else str(self.id))
+        super(MediaInstance, self).save(force_insert=force_insert, force_update=force_update,
+                                        using=using, update_fields=update_fields)
 
 
 class SocialUser(models.Model):
@@ -158,7 +190,7 @@ class SocialUser(models.Model):
     fullname = models.CharField(max_length=200, blank=True, null=True)
     # picture_url = models.TextField(null=True, blank=True)
     # picture = models.ImageField(storage=FS, null=True, blank=True)
-    picture = models.ForeignKey(MediaInstance, null=True, blank=True)
+    picture = models.ForeignKey(MediaInstance, null=True, blank=True, on_delete=models.SET_NULL)
     bio = models.TextField(null=True, blank=True)
     website = models.TextField(null=True, blank=True)
     is_artist = models.BooleanField(default=False)
@@ -183,12 +215,12 @@ class SocialUser(models.Model):
             return ''
 
     def get_picture_folder(self):
-        return 'authors/%s' % self.provider
+        return 'authors/%s/' % self.provider
 
 
 class Media(models.Model):
     id = models.BigAutoField(primary_key=True)
-    user = models.ForeignKey(UserMode)
+    user = models.ForeignKey(UserMode, on_delete=models.PROTECT)
 
     provider = models.CharField(max_length=50, choices=SocialProviders.Choices, help_text="Social platform provider name")
     rid = models.CharField(max_length=100, db_index=True, help_text='id on origin platform')
@@ -196,8 +228,8 @@ class Media(models.Model):
     rlink = models.TextField()
 
     # owner = models.CharField(max_length=100, help_text='owner username on instagram')
-    owner = models.ForeignKey(SocialUser, related_name='owner', null=True)
-    author = models.ForeignKey(SocialUser, related_name='author', null=True)
+    owner = models.ForeignKey(SocialUser, related_name='owner', null=True, on_delete=models.SET_NULL)
+    author = models.ForeignKey(SocialUser, related_name='author', null=True, on_delete=models.SET_NULL)
     mentions = models.ManyToManyField(SocialUser, related_name='mentions')
     # mentions = models.TextField(null=True, blank=True, help_text="Mentioned persons in JSON format")
     # authors = models.ManyToManyField(Author)
@@ -214,21 +246,18 @@ class Media(models.Model):
 
     rjson = models.TextField()
 
-    thumb = models.ForeignKey(MediaInstance, null=True, blank=True, related_name='thumb_media')      # low
-    instance = models.ForeignKey(MediaInstance, null=True, blank=True, related_name='instance_media')   # origin
-    high_res = models.ForeignKey(MediaInstance, null=True, blank=True, related_name='high_res_media')   # high
+    # thumbnail for media (must)
+    thumb = models.ForeignKey(MediaInstance, on_delete=models.SET_NULL, null=True, blank=True, related_name='thumb_media')
 
-    # thumb = models.ImageField(storage=FS, help_text='thumbnail. must be image', null=True, blank=True)
-    # thumb_url = models.TextField(null=True, blank=True)
-    # low_res = models.ImageField(storage=FS, help_text='Low resolution file.')
-    # standard_res = models.ImageField(storage=FS, help_text='Standard resolution file.')
-    #
-    # thumb_width = models.IntegerField(null=True, blank=True, help_text='Thumbnail width.')
-    # thumb_height = models.IntegerField(null=True, blank=True, help_text='Thumbnail height.')
-    # low_width = models.IntegerField(null=True, blank=True, help_text='Low resolution width.')
-    # low_height = models.IntegerField(null=True, blank=True, help_text='Low resolution height.')
-    # standard_width = models.IntegerField(null=True, blank=True, help_text='Standard resolution width.')
-    # standard_height = models.IntegerField(null=True, blank=True, help_text='Standard resolution height.')
+    # screen-shots or covers for video and audio
+    pic_high_res = models.ForeignKey(MediaInstance, on_delete=models.SET_NULL, null=True, blank=True, related_name='pic_high_res_media')
+    pic_mid_res = models.ForeignKey(MediaInstance, on_delete=models.SET_NULL, null=True, blank=True, related_name='pic_mid_res_media')
+    pic_low_res = models.ForeignKey(MediaInstance, on_delete=models.SET_NULL, null=True, blank=True, related_name='pic_low_res_media')
+
+    # instances for media
+    high_res = models.ForeignKey(MediaInstance, on_delete=models.SET_NULL, null=True, blank=True, related_name='high_res_media')
+    mid_res = models.ForeignKey(MediaInstance, on_delete=models.SET_NULL, null=True, blank=True, related_name='mid_res_media')
+    low_res = models.ForeignKey(MediaInstance, on_delete=models.SET_NULL, null=True, blank=True, related_name='low_res_media')
 
     class Meta:
         unique_together = (
@@ -237,17 +266,74 @@ class Media(models.Model):
         )
         # abstract = True
 
-    def get_thumb_url(self):
-        if self.thumb:
-            if self.thumb.instance:
-                return self.thumb.instance.url
-            else:
-                return self.thumb.origin_url
-        else:
-            return ''
+    def __str__(self):
+        return '<%s> %s %s by %s@%s' % (self.__class__.__name__, self.type, self.rcode, self.owner, self.provider)
 
-    def get_instance_folder(self, instance):
-        return '%s/%s' % (self.provider, MediaResolution.get_text(instance.resolution))
+    def get_media_instance(self, resolution):
+        mi = None
+        if resolution == MediaResolution.LOW:
+            mi = self.low_res
+        elif resolution == MediaResolution.MID:
+            mi = self.mid_res
+        elif resolution == MediaResolution.HIGH:
+            mi = self.high_res
+        return mi
+
+    def get_pic_instance(self, resolution):
+        mi = None
+        if resolution == MediaResolution.THUMB:
+            mi = self.thumb
+        elif resolution == MediaResolution.LOW:
+            mi = self.pic_low_res
+        elif resolution == MediaResolution.MID:
+            mi = self.pic_mid_res
+        elif resolution == MediaResolution.HIGH:
+            mi = self.pic_high_res
+        return mi
+
+    def get_pic_url(self, resolution=MediaResolution.THUMB, force_origin=True):
+        mi = self.get_pic_instance(resolution)
+        url = ''
+        if mi:
+            if force_origin:
+                url = mi.origin_url
+            else:
+                url = mi.instance.url
+        return url
+
+    def get_url(self, resolution=MediaResolution.LOW, force_origin=True):
+        mi = self.get_media_instance(resolution)
+        url = ''
+        if mi:
+            if force_origin:
+                url = mi.origin_url
+            else:
+                url = mi.instance.url
+        return url
+
+    def get_thumb_url(self):
+        return self.get_pic_url(force_origin=False)
+
+    def get_pic_low_url(self):
+        return self.get_pic_url(resolution=MediaResolution.LOW)
+
+    def get_pic_mid_url(self):
+        return self.get_pic_url(resolution=MediaResolution.MID)
+
+    def get_pic_high_url(self):
+        return self.get_pic_url(resolution=MediaResolution.HIGH)
+
+    def get_low_url(self):
+        return self.get_url(resolution=MediaResolution.LOW)
+
+    def get_high_url(self):
+        return self.get_url(resolution=MediaResolution.MID)
+
+    def get_mid_url(self):
+        return self.get_url(resolution=MediaResolution.HIGH)
+
+    def get_instance_folder(self):
+        return '%s/' % self.provider
 
 
 class SysConfig(models.Model):
@@ -257,15 +343,26 @@ class SysConfig(models.Model):
 
 class MyMedia(models.Model):
     id = models.BigAutoField(primary_key=True)
-    user = models.ForeignKey(UserMode)
-    media = models.ForeignKey(Media, related_name='media')
+    user = models.ForeignKey(UserMode, on_delete=models.CASCADE)
+    media = models.ForeignKey(Media, on_delete=models.CASCADE, related_name='media')
 
 
 class LikedMedia(models.Model):
     id = models.BigAutoField(primary_key=True)
-    user = models.ForeignKey(UserMode)
-    media = models.ForeignKey(Media)
+    user = models.ForeignKey(UserMode, on_delete=models.CASCADE)
+    media = models.ForeignKey(Media, on_delete=models.CASCADE)
 
+
+class UserMediaOrigin(models.Model):
+    pass
+
+
+class UserMediaHighRes(models.Model):
+    pass
+
+
+class UserMediaMidRes(models.Model):
+    pass
 
 
 # class Photo(models.Model):
