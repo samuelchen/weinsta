@@ -4,7 +4,7 @@
 from .media import (
     Media,
     MediaType,
-    MediaResolution,
+    MediaQuality,
     SocialProviders,
     SocialUser,
     MyMedia,

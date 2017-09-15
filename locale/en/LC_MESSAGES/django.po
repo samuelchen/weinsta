@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2017-09-14 12:31+0800\n"
+"POT-Creation-Date: 2017-09-15 21:53+0800\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -38,7 +38,7 @@ msgid "Instagram"
 msgstr ""
 
 #: .\templates\weinsta\includes\topnavbar.html:25
-#: .\templates\weinsta\twitter.html:3 .\templates\weinsta\twitter.html:76
+#: .\templates\weinsta\twitter.html:3 .\templates\weinsta\twitter.html:77
 msgid "Twitter"
 msgstr ""
 
@@ -80,17 +80,17 @@ msgstr ""
 
 #: .\templates\weinsta\index.html:17 .\templates\weinsta\insta.html:79
 #: .\templates\weinsta\media.html:19 .\templates\weinsta\pub.html:14
-#: .\templates\weinsta\twitter.html:69
+#: .\templates\weinsta\twitter.html:70
 msgid "Media Owner"
 msgstr ""
 
 #: .\templates\weinsta\index.html:24 .\templates\weinsta\insta.html:86
-#: .\templates\weinsta\media.html:41 .\templates\weinsta\twitter.html:76
+#: .\templates\weinsta\media.html:41 .\templates\weinsta\twitter.html:77
 msgid "View on"
 msgstr ""
 
 #: .\templates\weinsta\index.html:26 .\templates\weinsta\insta.html:88
-#: .\templates\weinsta\media.html:43 .\templates\weinsta\twitter.html:78
+#: .\templates\weinsta\media.html:43 .\templates\weinsta\twitter.html:79
 msgid "View"
 msgstr ""
 
@@ -122,7 +122,7 @@ msgstr ""
 msgid "You must specify at least 1 target platform to publish."
 msgstr ""
 
-#: .\weinsta\clients\instagram.py:62
+#: .\weinsta\clients\instagram.py:62 .\weinsta\clients\twitter.py:79
 #, python-format
 msgid ""
 "Token is not found. Check your registered APP or <a href=\"%s\">re-connect</"
@@ -141,15 +141,19 @@ msgstr ""
 msgid "weibo"
 msgstr ""
 
-#: .\weinsta\models\media.py:56
-msgid "photo"
-msgstr ""
-
 #: .\weinsta\models\media.py:57
-msgid "video"
+msgid "unknown"
 msgstr ""
 
 #: .\weinsta\models\media.py:58
+msgid "photo"
+msgstr ""
+
+#: .\weinsta\models\media.py:59
+msgid "video"
+msgstr ""
+
+#: .\weinsta\models\media.py:60
 msgid "audio"
 msgstr ""
 

@@ -8,7 +8,7 @@ import logging
 from django.db import IntegrityError
 import requests
 from django.core.cache import cache
-from ..models import Media, MediaInstance, MediaResolution
+from ..models import Media, MediaInstance, MediaQuality, SocialUser, MediaType
 
 log = logging.getLogger(__name__)
 
@@ -59,7 +59,14 @@ class SocialClient(object, metaclass=abc.ABCMeta):
         :param requests_session: requests session objects
         :return:
         """
-        pass
+        raise NotImplementedError
+
+    @abc.abstractmethod
+    def get_token_hash(self):
+        """
+        Return a hash code of token to represent the client user
+        """
+        raise NotImplementedError
 
     # @abc.abstractmethod
     # def save_media(self, media_dict, download_media=False, callback=None):
@@ -86,7 +93,7 @@ class SocialClient(object, metaclass=abc.ABCMeta):
 
         url = '%s/%s' % (self.api_root, endpoint)
 
-        cached_obj = cache.get((self.token, url))
+        cached_obj = cache.get(self.get_token_hash() + '_' + url)
         if cached_obj:
             log.debug('cache hit %s' % url)
             if callback:
@@ -107,7 +114,7 @@ class SocialClient(object, metaclass=abc.ABCMeta):
             if 200 > r.status_code or r.status_code >= 400:
                 log.error('%d %s. "%s". %s' % (r.status_code, r.reason, endpoint, obj))
             else:
-                cache.set((self.token, url), obj)
+                cache.set(self.get_token_hash() + '_' + url, obj)
             if callback:
                 callback(obj)
 
@@ -127,7 +134,7 @@ class SocialClient(object, metaclass=abc.ABCMeta):
         else:
             url = '%s/%s' % (self.api_root, endpoint)
 
-        cached_obj = cache.get((self.token, url))
+        cached_obj = cache.get(self.get_token_hash() + '_' + url)
         if cached_obj:
             log.debug('cache hit %s' % url)
             return cached_obj
@@ -146,7 +153,7 @@ class SocialClient(object, metaclass=abc.ABCMeta):
         if 200 > r.status_code or r.status_code >= 400:
             log.error('%d %s. "%s". %s' % (r.status_code, r.reason, endpoint, obj))
         else:
-            cache.set((self.token, url), obj)
+            cache.set(self.get_token_hash() + '_' + url, obj)
 
         return obj
 
@@ -201,7 +208,7 @@ class SocialClient(object, metaclass=abc.ABCMeta):
 
         return fullpath
 
-    def save_media_instance(self, media, url, media_type, resolution, width, height,
+    def save_media_instance(self, media, url, media_type, quality, width=None, height=None,
                             update_if_exists=False, cache_to_local=False):
 
         assert isinstance(media, Media)
@@ -213,7 +220,7 @@ class SocialClient(object, metaclass=abc.ABCMeta):
         if created or update_if_exists:
             log.debug('%s MediaInstance for %s (hash=%s)' % ('creating' if created else 'updating', url, url_hash))
             mi.type = media_type
-            mi.resolution = resolution
+            mi.quality = quality
             mi.origin_url = url
             mi.width = width
             mi.height = height
@@ -228,9 +235,50 @@ class SocialClient(object, metaclass=abc.ABCMeta):
         if cache_to_local:
             if not (mi.instance and os.path.exists(mi.instance.path)):
                 file_ext = url[url.rindex('.'):]
-                filename = os.path.join(m.get_instance_folder(), MediaResolution.get_slug(resolution),
+                filename = os.path.join(m.get_instance_folder(), MediaQuality.get_slug(quality),
                     m.rcode + file_ext)
                 self.download(url=url, filename=filename, file_field=mi.instance)
                 log.info('[Downloaded] %s' % mi)
 
         return mi
+
+    def save_author(self, rid, username, fullname=None, pic_url=None, bio=None, website=None, update_if_exists=False,
+                    cache_pic_to_local=False):
+        provider = self.provider
+        dirty = False
+
+        u, created = SocialUser.objects.get_or_create(provider=provider, rid=rid)
+        if created or update_if_exists:
+            log.info('%s social user: %s' % ('Creating new' if created else 'Updating', username))
+            u.username = username
+            u.fullname = fullname
+            u.bio = bio
+            u.website = website
+            dirty = True
+
+        if u.picture is None:
+            log.debug('user picture is None. creating from %s...' % pic_url)
+            pic_url_hash = MediaInstance.calc_url_hash(pic_url)
+            u.picture, created = MediaInstance.objects.get_or_create(url_hash=pic_url_hash)
+            dirty = True
+
+        mi = u.picture
+        if mi and created or update_if_exists:
+            mi.type = MediaType.PHOTO
+            mi.quality = MediaQuality.ORIGIN
+            mi.origin_url = pic_url
+            mi.save()
+            log.debug('[SAVED] %s' % mi)
+
+        if cache_pic_to_local and mi.origin_url:
+            if not (mi and mi.instance and os.path.exists(mi.instance.path)):
+                file_ext = pic_url[pic_url.rindex('.'):]
+                filename = username + file_ext
+                filename = os.path.join(u.get_picture_folder(), filename)
+                self.download(url=pic_url, filename=filename, file_field=mi.instance)
+                log.info('[Downloaded] %s' % mi)
+
+        if dirty:
+            u.save()
+            log.debug('[SAVED] %s' % u)
+        return u

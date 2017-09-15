@@ -29,6 +29,10 @@ class InstaView(TemplateView, BaseViewMixin):
     def get_context_data(self, **kwargs):
         context = super(InstaView, self).get_context_data(**kwargs)
 
+        req = self.request.GET
+        tab = req.get('tab', 'medias')
+        context['tab'] = tab
+
         token = InstagramClient.get_my_token(self.request)
         if token:
             client = InstagramClient(token=token)
@@ -42,7 +46,7 @@ class InstaView(TemplateView, BaseViewMixin):
 
             def on_my_medias(my_medias):
                 for md in my_medias:
-                    m = client.save_media(md, self.request, cache_to_local=True)
+                    m = client.save_media(md, self.request, update_if_exists=False, cache_to_local=True)
                     mine, created = MyMedia.objects.get_or_create(user=self.request.user, media=m)
                     if created:
                         mine.save()
@@ -50,15 +54,15 @@ class InstaView(TemplateView, BaseViewMixin):
             client.fetch_my_likes(callback=on_likes)
             client.fetch_my_own_medias(callback=on_my_medias)
 
-        req = self.request.GET
-        tab = req.get('tab', 'medias')
-        context['tab'] = tab
-
         if tab == 'medias':
-            context['medias'] = MyMedia.objects.filter(user=self.request.user).select_related('media')
+            context['medias'] = MyMedia.objects.filter(user=self.request.user,
+                                                       media__provider=SocialProviders.INSTAGRAM
+                                                       ).select_related('media')
         elif tab == 'likes':
             # my instagram likes
-            context['medias'] = LikedMedia.objects.filter(user=self.request.user).select_related('media')
+            context['medias'] = LikedMedia.objects.filter(user=self.request.user,
+                                                          media__provider=SocialProviders.INSTAGRAM
+                                                          ).select_related('media')
         elif tab == 'tags':
             # search tags
             pass

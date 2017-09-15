@@ -218,6 +218,7 @@ LOGGING = {
     },
 }
 
+
 CACHES = {
     # 'default': {
     #     'BACKEND': 'django.core.cache.backends.dummy.DummyCache',
@@ -229,7 +230,7 @@ CACHES = {
     'default': {
         'BACKEND': 'django.core.cache.backends.filebased.FileBasedCache',
         'LOCATION': os.path.abspath(os.path.join(MEDIA_ROOT, 'cache')),
-        'TIMEOUT': 600,     # seconds
+        'TIMEOUT': 3600,     # seconds
         'OPTIONS': {
             'MAX_ENTRIES': 1000
         }
@@ -248,7 +249,6 @@ CACHES = {
     #     ]
     # }
 }
-
 MIDDLEWARE.insert(0, 'django.middleware.cache.UpdateCacheMiddleware')
 MIDDLEWARE.append('django.middleware.cache.FetchFromCacheMiddleware')
-CACHE_MIDDLEWARE_SECONDS = 600
+CACHE_MIDDLEWARE_SECONDS = 3600

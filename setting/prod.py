@@ -9,3 +9,7 @@ PROXIES = {
 }
 
 MEDIA_ROOT = '/opt/data/'
+
+
+if CACHES['default']['BACKEND'] == 'django.core.cache.backends.filebased.FileBasedCache':
+    CACHES['default']['LOCATION'] = os.path.abspath(os.path.join(MEDIA_ROOT, 'cache'))

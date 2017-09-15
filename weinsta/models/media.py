@@ -90,29 +90,30 @@ class MediaType(object):
             return MediaType.UNKNOWN
 
 
-class MediaResolution(object):
-    ORIGIN = 0
-    THUMB = 9
+class MediaQuality(object):
+    THUMB = 0
     LOW = 10
-    MID = 20
-    HIGH = 30
+    # MID = 20
+    HIGH = 20
+    ORIGIN = 100
+
     _texts = {
-        # ORIGIN: _n('media resolution', 'origin'),
-        # THUMB: _n('media resolution', 'thumb'),
-        # LOW: _n('media resolution', 'low'),
-        # MID: _n('media resolution', 'medium'),
-        # HIGH: _n('media resolution', 'high'),
+        # ORIGIN: _n('media quality', 'origin'),
+        # THUMB: _n('media quality', 'thumb'),
+        # LOW: _n('media quality', 'low'),
+        # MID: _n('media quality', 'medium'),
+        # HIGH: _n('media quality', 'high'),
         ORIGIN: _n('origin'),
         THUMB: _n('thumb'),
         LOW: _n('low'),
-        MID: _n('medium'),
+        # MID: _n('medium'),
         HIGH: _n('high'),
     }
     _icons = {
         ORIGIN: 'fa fa-origin',
         THUMB: 'fa fa-origin',
         LOW: 'fa fa-low',
-        MID: 'fa fa-mid',
+        # MID: 'fa fa-mid',
         HIGH: 'fa fa-high',
     }
     Choices = _texts.items()
@@ -134,13 +135,13 @@ class MediaResolution(object):
     # def from_str(cls, resolution_str):
     #     resolution_str = resolution_str.lower()
     #     if resolution_str in ['thumbnail', 'thumb', 'avatar', 'icon']:
-    #         return MediaResolution.LOW
+    #         return MediaQuality.LOW
     #     elif resolution_str in ['low', 'low_resolution', 'low_bandwidth']:
-    #         return MediaResolution.LOW
+    #         return MediaQuality.LOW
     #     elif resolution_str in ['standard', 'standard_resolution']:
-    #         return MediaResolution.MID
+    #         return MediaQuality.MID
     #     elif resolution_str in ['high', 'hi', 'high_resolution', 'hi_resolution', 'hi_bandwith', 'high_bandwidth']:
-    #         return MediaResolution.HIGH
+    #         return MediaQuality.HIGH
     #     else:
     #         return None
 
@@ -150,7 +151,7 @@ class MediaInstance(models.Model):
     # media = models.ForeignKey(Media)
     type = models.CharField(max_length=50, choices=MediaType.Choices, default=MediaType.PHOTO)
     # provider = models.CharField(max_length=50, choices=SocialProviders.Choices, default=SocialProviders.INSTAGRAM)
-    resolution = models.CharField(max_length=50, choices=MediaResolution.Choices, default=MediaResolution.MID)
+    quality = models.CharField(max_length=50, choices=MediaQuality.Choices, default=MediaQuality.ORIGIN)
 
     # thumb = models.ImageField(storage=FS, null=True, blank=True, help_text='Thumbnail picture')
     instance = models.FileField(storage=FS, null=True, blank=True, help_text='Media instance storage')
@@ -163,23 +164,33 @@ class MediaInstance(models.Model):
     # extra_data = models.TextField(help_text='extra data in JSON format', null=True, blank=True)
 
     def __str__(self):
-        return '<%s> %s (%s %s %dx%d) from %s (%s)' % (
-            self.__class__.__name__,
+        return '%s <%s> %s (%s %s %dx%d) from %s (%s)' % (
+            self.__class__.__name__, self.id,
             os.path.join(self.instance.path, self.instance.name) if self.instance else '<path:none>', self.type,
-            MediaResolution.get_text(self.resolution), self.width or 0, self.height or 0, self.origin_url,
+            MediaQuality.get_text(self.quality), self.width or 0, self.height or 0, self.origin_url,
             self.url_hash)
 
     @staticmethod
     def calc_url_hash(url):
-        md5 = hashlib.md5()
-        md5.update(url.encode())
-        return md5.hexdigest()
+        if url:
+            md5 = hashlib.md5()
+            md5.update(url.encode())
+            return md5.hexdigest()
+        else:
+            return None
 
     def save(self, force_insert=False, force_update=False, using=None,
              update_fields=None):
         self.url_hash = MediaInstance.calc_url_hash(self.origin_url if self.origin_url else str(self.id))
         super(MediaInstance, self).save(force_insert=force_insert, force_update=force_update,
                                         using=using, update_fields=update_fields)
+
+    def get_url(self, prefer_origin_url=True):
+        if prefer_origin_url:
+            url = self.origin_url or self.instance.url
+        else:
+            url = self.instance.url if self.instance else self.origin_url
+        return url
 
 
 class SocialUser(models.Model):
@@ -198,19 +209,15 @@ class SocialUser(models.Model):
 
     class Meta:
         unique_together = (
-            ('provider', 'rid'),
-            ('provider', 'username')
+            ('provider', 'rid', 'username')
         )
 
     def __str__(self):
         return self.fullname if self.fullname else self.username
 
-    def get_pic_url(self):
+    def get_pic_url(self, prefer_origin_url=False):
         if self.picture:
-            if self.picture.instance:
-                return self.picture.instance.url
-            else:
-                return self.picture.origin_url
+            return self.picture.get_url(prefer_origin_url=prefer_origin_url)
         else:
             return ''
 
@@ -224,7 +231,7 @@ class Media(models.Model):
 
     provider = models.CharField(max_length=50, choices=SocialProviders.Choices, help_text="Social platform provider name")
     rid = models.CharField(max_length=100, db_index=True, help_text='id on origin platform')
-    rcode = models.CharField(max_length=100, db_index=True, help_text="code/id on other platform")
+    rcode = models.CharField(max_length=100, db_index=True, help_text="code/id on origin platform")
     rlink = models.TextField()
 
     # owner = models.CharField(max_length=100, help_text='owner username on instagram')
@@ -249,88 +256,80 @@ class Media(models.Model):
     # thumbnail for media (must)
     thumb = models.ForeignKey(MediaInstance, on_delete=models.SET_NULL, null=True, blank=True, related_name='thumb_media')
 
-    # screen-shots or covers for video and audio
-    pic_high_res = models.ForeignKey(MediaInstance, on_delete=models.SET_NULL, null=True, blank=True, related_name='pic_high_res_media')
-    pic_mid_res = models.ForeignKey(MediaInstance, on_delete=models.SET_NULL, null=True, blank=True, related_name='pic_mid_res_media')
-    pic_low_res = models.ForeignKey(MediaInstance, on_delete=models.SET_NULL, null=True, blank=True, related_name='pic_low_res_media')
+    # pictures for vide/audio (high/low quality screen-shot or cover)
+    pic_high = models.ForeignKey(MediaInstance, on_delete=models.SET_NULL, null=True, blank=True, related_name='pic_high_res_media')
+    pic_low = models.ForeignKey(MediaInstance, on_delete=models.SET_NULL, null=True, blank=True, related_name='pic_low_res_media')
 
-    # instances for media
-    high_res = models.ForeignKey(MediaInstance, on_delete=models.SET_NULL, null=True, blank=True, related_name='high_res_media')
-    mid_res = models.ForeignKey(MediaInstance, on_delete=models.SET_NULL, null=True, blank=True, related_name='mid_res_media')
-    low_res = models.ForeignKey(MediaInstance, on_delete=models.SET_NULL, null=True, blank=True, related_name='low_res_media')
+    # instances for media (quality: origin, high, low)
+    origin = models.ForeignKey(MediaInstance, on_delete=models.SET_NULL, null=True, blank=True, related_name='origin_media')
+    high = models.ForeignKey(MediaInstance, on_delete=models.SET_NULL, null=True, blank=True, related_name='high_quality_media')
+    low = models.ForeignKey(MediaInstance, on_delete=models.SET_NULL, null=True, blank=True, related_name='low_quality_media')
 
     class Meta:
         unique_together = (
-            ('provider', 'rcode'),
-            ('provider', 'rid')
+            ('provider', 'rid', 'rcode'),
         )
         # abstract = True
 
     def __str__(self):
         return '<%s> %s %s by %s@%s' % (self.__class__.__name__, self.type, self.rcode, self.owner, self.provider)
 
-    def get_media_instance(self, resolution):
+    def get_media_instance(self, quality):
         mi = None
-        if resolution == MediaResolution.LOW:
-            mi = self.low_res
-        elif resolution == MediaResolution.MID:
-            mi = self.mid_res
-        elif resolution == MediaResolution.HIGH:
-            mi = self.high_res
+        if quality == MediaQuality.ORIGIN:
+            mi = self.origin
+        elif quality == MediaQuality.HIGH:
+            mi = self.high
+        elif quality == MediaQuality.LOW:
+            mi = self.low
+        if not mi:
+            mi = self.origin or self.high or self.low
         return mi
 
-    def get_pic_instance(self, resolution):
+    def get_pic_instance(self, quality):
         mi = None
-        if resolution == MediaResolution.THUMB:
+        if quality == MediaQuality.THUMB:
             mi = self.thumb
-        elif resolution == MediaResolution.LOW:
-            mi = self.pic_low_res
-        elif resolution == MediaResolution.MID:
-            mi = self.pic_mid_res
-        elif resolution == MediaResolution.HIGH:
-            mi = self.pic_high_res
+        elif quality == MediaQuality.LOW:
+            mi = self.pic_low
+        elif quality == MediaQuality.HIGH:
+            mi = self.pic_high
+        if not mi:
+            mi = self.pic_high or self.pic_low or self.thumb
+
         return mi
 
-    def get_pic_url(self, resolution=MediaResolution.THUMB, force_origin=True):
-        mi = self.get_pic_instance(resolution)
+    def get_pic_url(self, quality=MediaQuality.THUMB, prefer_origin_url=True):
+        mi = self.get_pic_instance(quality)
         url = ''
         if mi:
-            if force_origin:
-                url = mi.origin_url
-            else:
-                url = mi.instance.url
+            return mi.get_url(prefer_origin_url=prefer_origin_url)
         return url
 
-    def get_url(self, resolution=MediaResolution.LOW, force_origin=True):
-        mi = self.get_media_instance(resolution)
+    def get_url(self, quality=MediaQuality.ORIGIN, prefer_origin_url=True):
+        mi = self.get_media_instance(quality)
         url = ''
         if mi:
-            if force_origin:
-                url = mi.origin_url
-            else:
-                url = mi.instance.url
+            return mi.get_url(prefer_origin_url=prefer_origin_url)
         return url
 
-    def get_thumb_url(self):
-        return self.get_pic_url(force_origin=False)
+    def get_thumb_url(self, prefer_origin_url=False):
+        return self.get_pic_url(prefer_origin_url=prefer_origin_url)
 
     def get_pic_low_url(self):
-        return self.get_pic_url(resolution=MediaResolution.LOW)
-
-    def get_pic_mid_url(self):
-        return self.get_pic_url(resolution=MediaResolution.MID)
+        return self.get_pic_url(quality=MediaQuality.LOW)
 
     def get_pic_high_url(self):
-        return self.get_pic_url(resolution=MediaResolution.HIGH)
+        return self.get_pic_url(quality=MediaQuality.HIGH)
 
     def get_low_url(self):
-        return self.get_url(resolution=MediaResolution.LOW)
+        return self.get_url(quality=MediaQuality.LOW)
 
     def get_high_url(self):
-        return self.get_url(resolution=MediaResolution.MID)
+        return self.get_url(quality=MediaQuality.HIGH)
 
-    def get_mid_url(self):
-        return self.get_url(resolution=MediaResolution.HIGH)
+    def get_origin_url(self):
+        return self.get_url(quality=MediaQuality.ORIGIN)
 
     def get_instance_folder(self):
         return '%s/' % self.provider
@@ -353,16 +352,16 @@ class LikedMedia(models.Model):
     media = models.ForeignKey(Media, on_delete=models.CASCADE)
 
 
-class UserMediaOrigin(models.Model):
-    pass
-
-
-class UserMediaHighRes(models.Model):
-    pass
-
-
-class UserMediaMidRes(models.Model):
-    pass
+# class UserMediaOrigin(models.Model):
+#     pass
+#
+#
+# class UserMediaHighRes(models.Model):
+#     pass
+#
+#
+# class UserMediaMidRes(models.Model):
+#     pass
 
 
 # class Photo(models.Model):
@@ -373,13 +372,13 @@ class UserMediaMidRes(models.Model):
 #
 #
 # class Video(models.Model):
-#     video_low_res = models.FileField(storage=FS, help_text='Low resolution file.')
-#     video_standard_res = models.FileField(storage=FS, help_text='Standard resolution file.')
+#     video_low_res = models.FileField(storage=FS, help_text='Low quality file.')
+#     video_standard_res = models.FileField(storage=FS, help_text='Standard quality file.')
 #
-#     video_low_width = models.IntegerField(null=True, blank=True, help_text='Low resolution width.')
-#     video_low_height = models.IntegerField(null=True, blank=True, help_text='Low resolution height.')
-#     video_standard_width = models.IntegerField(null=True, blank=True, help_text='Standard resolution width.')
-#     video_standard_height = models.IntegerField(null=True, blank=True, help_text='Standard resolution height.')
+#     video_low_width = models.IntegerField(null=True, blank=True, help_text='Low quality width.')
+#     video_low_height = models.IntegerField(null=True, blank=True, help_text='Low quality height.')
+#     video_standard_width = models.IntegerField(null=True, blank=True, help_text='Standard quality width.')
+#     video_standard_height = models.IntegerField(null=True, blank=True, help_text='Standard quality height.')
 #
 #     def __init__(self, *args, **kwargs):
 #         super(Video, self).__init__(*args, **kwargs)
