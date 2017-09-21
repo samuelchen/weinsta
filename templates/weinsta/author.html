@@ -7,7 +7,7 @@
 
 {% block content %}
 
-    <div class="container">
+    <div class="container align-left">
 
         <form class="form-inline mt-2 mt-md-0" method="get">
 {#            {% csrf_token %}#}
@@ -31,39 +31,13 @@
         </form>
     </div>
 
-    <div class="row pl-1">
+    <div class="row mt-2 pl-1">
     {% for author in authors %}
-        <div class="col-lg-3 col-md-4 mt-2">
-            <div class="card" {# style="width: 15rem;" #}>
-                <div class="card-img-top">
-                    <img class="rounded ml-2 mt-2" style=" height: 5rem"
-                         src="{{ author.get_pic_url }}" alt="{{ author.username }}">
-
-{#                    <div class="media-body ml-1 mr-1">#}
-{#                        {% if author.is_artist %}<span class="badge badge-success" title="artist" data-toggle="tooltip"><i class="fa fa-id-badge"></i></span>{% endif %}#}
-{#                        {% if author.is_publisher %}<span class="badge badge-info" title="publisher" data-toggle="tooltip"><i class="fa fa-id-badge"></i></span>{% endif %}#}
-{#                        <a href="#"><span class="badge badge-secondary" title="@{{ author.username }}" data-toggle="tooltip"><i class="fa fa-{{ author.provider }}"></i></span></a>#}
-{#                    </div>#}
-                </div>
-                <div class="card-body small">
-                <div class="media">
-                    <h5 class="card-title">{{ author.fullname }}</h5>
-
-                                    <div class="media-body ml-1 mr-1">
-                        {% if author.is_artist %}<span class="badge badge-success" title="artist" data-toggle="tooltip"><i class="fa fa-id-badge"></i></span>{% endif %}
-                        {% if author.is_publisher %}<span class="badge badge-info" title="publisher" data-toggle="tooltip"><i class="fa fa-id-badge"></i></span>{% endif %}
-                        <a href="#"><span class="badge badge-secondary" title="@{{ author.username }}" data-toggle="tooltip"><i class="fa fa-{{ author.provider }}"></i></span></a>
-                    </div>
-                </div>
-                    <p class="card-text small">{{ author.bio|default_if_none:"&nbsp;" }}</p>
-
-                    {% if author.website %}<a href="{{ author.website }}" target="_blank" class="btn btn-outline-primary btn-sm">website</a>{% endif %}
-                    {% if author.media_set %}<a href="#" class="btn btn-outline-primary btn-sm">media</a>{% endif %}
-                    <a href="#" class="btn btn-outline-primary btn-sm"><i class="fa fa-gear"></i></a>
-                </div>
-            </div>
-        </div>
+        {% include 'weinsta/includes/author-card.html' %}
     {% endfor %}
     </div>
+
+    {% include 'weinsta/includes/photo-viewer.html' %}
+
 
 {% endblock %}

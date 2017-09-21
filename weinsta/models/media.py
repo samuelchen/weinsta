@@ -215,7 +215,7 @@ class SocialUser(models.Model):
         )
 
     def __str__(self):
-        return self.fullname if self.fullname else self.username
+        return self.fullname if self.fullname else self.username or ''
 
     def get_pic_url(self, prefer_origin_url=False):
         if self.picture:
@@ -225,6 +225,12 @@ class SocialUser(models.Model):
 
     def get_picture_folder(self):
         return 'authors/%s/' % self.provider
+
+    def get_name(self):
+        return self.fullname or self.username
+
+    def get_icon(self):
+        return 'fa fa-' + self.provider
 
 
 class Media(models.Model):
@@ -237,8 +243,8 @@ class Media(models.Model):
     rlink = models.TextField()
 
     # owner = models.CharField(max_length=100, help_text='owner username on instagram')
-    owner = models.ForeignKey(SocialUser, related_name='owner', null=True, on_delete=models.SET_NULL)
-    author = models.ForeignKey(SocialUser, related_name='author', null=True, on_delete=models.SET_NULL)
+    owner = models.ForeignKey(SocialUser, related_name='posted_media', null=True, on_delete=models.SET_NULL)
+    author = models.ForeignKey(SocialUser, related_name='authorized_media', null=True, on_delete=models.SET_NULL)
     mentions = models.ManyToManyField(SocialUser, related_name='mentions')
     # mentions = models.TextField(null=True, blank=True, help_text="Mentioned persons in JSON format")
     # authors = models.ManyToManyField(Author)

@@ -59,14 +59,16 @@
                 </div>
                 <div id="id_targets" class="form-check">
                     <label for="">Publish to: </label>
-                    {% for provider, text in providers.Choices %}{% if provider != media.provider %}
+                    {% for provider, text in providers.Choices %}
+                        {% if provider != media.provider and provider != providers.UNKNOWN %}
                         <label class="custom-control custom-checkbox">
                             <input name="{{ provider }}" type="checkbox" class="custom-control-input">
                             <span class="custom-control-indicator"></span>
                             <span class="custom-control-description"><i
                                     class="fa fa-{{ provider }}"></i> {{ text }}</span>
                         </label>
-                    {% endif %}{% endfor %}
+                        {% endif %}
+                    {% endfor %}
                 </div>
                 <button id="id_btn_publish" type="button" class="btn btn-primary">Publish</button>
                 <button id="id_btn_preview" type="button" class="btn btn-primary">Preview</button>
