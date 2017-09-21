@@ -32,12 +32,12 @@ class PubView(TemplateView, BaseViewMixin):
         text = '%s #%s# http://instagram.com/%s \n%s' % (owner, media.provider, owner, text)
 
         if SocialProviders.WEIBO in request.POST:
-            self.pub_to_weibo(media.thumb, text)
+            self.pub_to_weibo(media.thumb.instance, text)
 
         if SocialProviders.TWITTER in request.POST:
             token = TwitterClient.get_my_token(request)
             client = TwitterClient(token=token)
-            client.post_status(text, media.thumb)
+            client.post_status(text, media.thumb.instance)
 
         return super(PubView, self).get(request, *args, **kwargs)
 
@@ -60,6 +60,7 @@ class PubView(TemplateView, BaseViewMixin):
             "status": quote(text),
 
         }
+
         # print(img_field)
         # print(dir(img_field))
         # print(img_field.storage)
