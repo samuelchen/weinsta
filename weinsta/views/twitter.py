@@ -44,9 +44,10 @@ class TwitterView(TemplateView, BaseViewMixin):
         def on_likes(likes):
             for md in likes:
                 m = client.save_media(md, self.request, update_if_exists=False, cache_to_local=True)
-                like, created = LikedMedia.objects.get_or_create(user=self.request.user, media=m)
-                if created:
-                    like.save()
+                if m:
+                    like, created = LikedMedia.objects.get_or_create(user=self.request.user, media=m)
+                    if created:
+                        like.save()
 
         def on_my_medias(my_medias):
             for md in my_medias:

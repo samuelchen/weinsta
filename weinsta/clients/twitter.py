@@ -98,6 +98,7 @@ class TwitterClient(SocialClient):
 
     def save_media(self, media_dict, request, update_if_exists=False, cache_to_local=False):
         md = media_dict
+        m = None
 
         # shared values for all medias
         rid = md['id_str']
