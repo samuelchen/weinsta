@@ -7,7 +7,7 @@ from django.core.files.storage import FileSystemStorage
 from django.conf import settings
 import os
 from django.utils import timezone
-from django.utils.translation import pgettext_lazy as _p, ugettext_noop as _n, ugettext as _
+from django.utils.translation import pgettext_lazy, ugettext_noop, override, ugettext as _
 import simplejson as json
 import logging
 import hashlib
@@ -103,11 +103,11 @@ class MediaQuality(object):
         # LOW: _n('media quality', 'low'),
         # MID: _n('media quality', 'medium'),
         # HIGH: _n('media quality', 'high'),
-        ORIGIN: _n('origin'),
-        THUMB: _n('thumb'),
-        LOW: _n('low'),
+        ORIGIN: _('origin'),
+        THUMB: _('thumb'),
+        LOW: _('low'),
         # MID: _n('medium'),
-        HIGH: _n('high'),
+        HIGH: _('high'),
     }
     _icons = {
         ORIGIN: 'fa fa-origin',
@@ -121,11 +121,13 @@ class MediaQuality(object):
 
     @classmethod
     def get_text(cls, code):
-        return _(cls._texts.get(code))
+        return cls._texts.get(code)
 
     @classmethod
     def get_slug(cls, code):
-        return cls._texts.get(code)
+        slug = cls._texts.get(code)
+        with override('en'):
+            return slug
 
     @classmethod
     def get_icon(cls, code):
@@ -190,7 +192,7 @@ class MediaInstance(models.Model):
             url = self.origin_url or self.instance.url
         else:
             url = self.instance.url if self.instance else self.origin_url
-        return url
+        return url or ''
 
 
 class SocialUser(models.Model):
@@ -314,7 +316,7 @@ class Media(models.Model):
         return url
 
     def get_thumb_url(self, prefer_origin_url=False):
-        return self.get_pic_url(prefer_origin_url=prefer_origin_url)
+        return self.get_pic_url(quality=MediaQuality.THUMB, prefer_origin_url=prefer_origin_url)
 
     def get_pic_low_url(self):
         return self.get_pic_url(quality=MediaQuality.LOW)

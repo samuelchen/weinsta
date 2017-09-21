@@ -5,6 +5,7 @@ import abc
 from concurrent.futures import ThreadPoolExecutor
 import os
 import logging
+from queue import Queue
 from django.db import IntegrityError
 import requests
 from django.core.cache import cache
@@ -15,12 +16,18 @@ log = logging.getLogger(__name__)
 
 class SocialClient(object, metaclass=abc.ABCMeta):
 
+    __set = set()
+
     __api_root = ''
     __provider = ''
     __download_root = ''
     __proxies = None
     __executors = None
     _token = None
+
+    @classmethod
+    def get_downloading_set(cls):
+        return cls.__set
 
     @property
     def api_root(self):
@@ -166,47 +173,62 @@ class SocialClient(object, metaclass=abc.ABCMeta):
         If file_field specified, argument 'folder' will be IGNORED. Will use 'file_field.field.upload_to'.
         :return:
         """
+        rc = None
+        downloading_set = SocialClient.get_downloading_set()
+        if url in downloading_set:
+            log.info('[IGNORED] %s is in downloading.' % url)
+            return rc
+        else:
+            downloading_set.add(url)
+
         if not filename:
             filename = url.split('/')[-1]
 
-        if file_field is not None:
-            folder = file_field.field.upload_to(file_field, filename) \
-                if callable(file_field.field.upload_to) else file_field.field.upload_to
-        fullpath = os.path.join(self.download_root, folder, filename)
-        fullpath = os.path.abspath(fullpath)
-        os.makedirs(os.path.dirname(fullpath), exist_ok=True)
+        try:
+            if file_field is not None:
+                folder = file_field.field.upload_to(file_field, filename) \
+                    if callable(file_field.field.upload_to) else file_field.field.upload_to
+            fullpath = os.path.join(self.download_root, folder, filename)
+            fullpath = os.path.abspath(fullpath)
+            os.makedirs(os.path.dirname(fullpath), exist_ok=True)
+            rc = fullpath
 
-        # TODO: handle BIG file
-        log.debug('Downloading %s to %s' % (url, fullpath))
-        r = requests.get(url, stream=True, proxies=self.proxies)
-        if r.status_code != requests.codes.ok:
-            log.error('%d %s. Downloading %s' % (r.status_code, r.reason, url))
-            return None
+            # TODO: handle BIG file
+            log.debug('Downloading %s to %s' % (url, fullpath))
+            r = requests.get(url, stream=True, proxies=self.proxies)
+            if r.status_code != requests.codes.ok:
+                log.error('%d %s. Downloading %s' % (r.status_code, r.reason, url))
+                rc = None
 
-        if delete_if_exists:
-            if os.path.exists(fullpath):
+            if delete_if_exists:
+                if os.path.exists(fullpath):
+                    try:
+                        os.remove(fullpath)
+                    except Exception as err:
+                        log.exception(err)
+                        # then will auto rename
+
+            if file_field is not None:
+                file_field.save(filename, r.raw)
+            else:
                 try:
-                    os.remove(fullpath)
+                    with open(fullpath, 'wb') as f:
+                        f.write(r.raw)
                 except Exception as err:
                     log.exception(err)
-                    # then will auto rename
+                    try:
+                        if os.path.exists(fullpath):
+                            os.remove(fullpath)
+                    except:
+                        pass
+                    rc = None
+        except Exception as err:
+            log.exception(err)
+            rc = None
+        finally:
+            downloading_set.remove(url)
 
-        if file_field is not None:
-            file_field.save(filename, r.raw)
-        else:
-            try:
-                with open(fullpath, 'wb') as f:
-                    f.write(r.raw)
-            except Exception as err:
-                log.exception(err)
-                try:
-                    if os.path.exists(fullpath):
-                        os.remove(fullpath)
-                except:
-                    pass
-                return None
-
-        return fullpath
+        return rc
 
     def save_media_instance(self, media, url, media_type, quality, width=None, height=None,
                             update_if_exists=False, cache_to_local=False):
