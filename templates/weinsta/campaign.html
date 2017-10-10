@@ -1,0 +1,187 @@
+{% extends "base.html" %}{% load staticfiles i18n %}
+
+{% block head_title %}{% trans "Home" %} - {% endblock %}
+
+{% block extra_head %}
+
+{% endblock %}
+
+{% block content %}
+
+
+    <div id="demo">
+
+    </div>
+
+    <div class="container-fluid">
+        <div class="mt-2">
+            <button class="btn btn-primary" data-toggle="collapse" data-target="#id_editor" aria-expanded="false"
+                    aria-controls="id_editor">{% trans "Start a campaign" %}</button>
+        </div>
+
+
+        <div class="card card-body">
+                <table class="table table-responsive table-striped table-sm table-hover mt-2 small">
+                    <thead>
+                    <tr>
+                        <th class="d-md-table-cell d-none">#</th>
+                        <th>Title</th>
+                        <th>Status</th>
+                        <th>Begin</th>
+                        <th>End</th>
+                        <th>Providers</th>
+                        <th class="d-lg-table-cell d-none">Medias</th>
+                        <th class="d-lg-table-cell d-none">Text</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    {% for camp in campaigns %}
+                    <tr>
+                        <th scope="row" class="d-md-table-cell d-none">{{ camp.id }}</th>
+                        <td>{{ camp.name }}</td>
+                        <td>{{ camp.get_status_text }}</td>
+                        <td>{{ camp.begin }}</td>
+                        <td>{{ camp.end }}</td>
+                        <td>{{ camp.providers }}</td>
+                        <td class="d-lg-table-cell d-none">{{ camp.medias }}</td>
+                        <td class="d-lg-table-cell d-none">{{ camp.text }}</td>
+                    </tr>
+                    {% endfor %}
+
+                    <tr>
+                        <th scope="row" class="d-md-table-cell d-none">1</th>
+                        <td>Brand new logo</td>
+                        <td>ready</td>
+                        <td>2017/10/10</td>
+                        <td>2017/10/24</td>
+                        <td>twitter, instagram</td>
+                        <td class="d-lg-table-cell d-none">1, 2, 3</td>
+                        <td class="d-lg-table-cell d-none">New log to show</td>
+                    </tr>
+
+                    <tr>
+                        <th scope="row" class="d-md-table-cell d-none">2</th>
+                        <td>Christmas/New Year Sale</td>
+                        <td>new</td>
+                        <td>2017/12/20</td>
+                        <td>2018/1/5</td>
+                        <td>twitter, facebook, instagram</td>
+                        <td class="d-lg-table-cell d-none">7, 19</td>
+                        <td class="d-lg-table-cell d-none">Yearly Chrismas sale. BIG discount from 50%! come to http://bdgru.com/c/123/ </td>
+                    </tr>
+                    <tr>
+                        <th scope="row" class="d-md-table-cell d-none">3</th>
+                        <td>promote new car</td>
+                        <td>on going</td>
+                        <td>2017/9/3</td>
+                        <td>2017/11/27</td>
+                        <td>twitter, weibo</td>
+                        <td class="d-lg-table-cell d-none">3, 5</td>
+                        <td class="d-lg-table-cell d-none">New Benz SUV</td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+
+
+        <div id="id_editor" class=" mt-2">
+            <div class="card card-body">
+                <form id="id_form_campaign" method="post">
+                    {% csrf_token %}
+
+                    <!-- providers -->
+                    <div class="form-inline">
+                        <label for="" class="form-control-label mr-2">Publish to: </label>
+                        {% for provider, text in providers.Choices %}
+                            {% if provider != providers.UNKNOWN %}
+                                <div class="form-group">
+                                <label class="custom-control custom-checkbox">
+                                    <input name="sel_provider" type="checkbox" class="custom-control-input"
+                                           {% if provider in sel_providers %}checked{% endif %}
+                                           value="{{ provider }}">
+                                    <span class="custom-control-indicator"></span>
+                        <span class="custom-control-description"><i
+                                class="fa fa-{{ provider }}"></i> {{ text }}</span>
+                                </label>
+                                </div>
+                            {% endif %}
+
+                        {% endfor %}
+                    </div>
+
+                    <div class="form-group row">
+                        <div class="col">
+                            <label for="id_begin" class="col-form-label">{% trans "Begin at" %}:</label>
+                            <input class="form-control" type="datetime-local" value="2011-08-19T13:45:00"
+                                   id="id_begin">
+                        </div>
+                        <div class="col">
+                            <label for="id_end" class="col-form-label">{% trans "Begin at" %}:</label>
+                            <input class="form-control" type="datetime-local" value="2011-08-19T13:45:00"
+                                   id="id_end">
+                        </div>
+                    </div>
+
+                    <!-- medias -->
+                    <div class="form-group">
+                        <label for="" class="col-form-label">Selected medias:</label>
+{#                        <a href="#" target="_blank" class="">#}
+{#                            <i class="fa fa-plus-square mr-1"></i><span class="small">{% trans "add medias" %}</span></a>#}
+
+                        <div id="id_selected_medias" class="form-row">
+                            {% for media in medias %}
+                                {#                <img src="{{ media.get_pic_url }}" style="height: 10rem;">#}
+                                {% include 'weinsta/includes/media-card.html' with sel=True %}
+                            {% endfor %}
+                        </div>
+                        <small class="form-text text-muted"> (meida filter: by time, by provider, by name, by
+                            author, by
+                            type(AI) </small>
+                        {% include 'weinsta/includes/media-selection.html' with target_box="#id_selected_medias" %}
+
+                    </div>
+
+                    <!-- text -->
+                    <div class="form-row">
+                        <label for="id_text" class="col-form-label">Campaign Text:</label>
+                        <textarea id="id_text" class="form-control">The campaign text.</textarea>
+                        <small class="form-text text-muted">15 (characters count of text)</small>
+                    </div>
+
+                                <div class="form-row">
+                    Campaign detail
+                </div>
+
+                    <div class="form-row">
+                        <button type="submit">submit</button>
+                    </div>
+
+
+                </form>
+
+
+            </div>
+        </div>
+
+
+    </div>
+
+{% endblock %}
+
+
+{% block script %}
+{#    <link href="{% static 'boot-side-menu/BootSideMenu.css' %}" rel="stylesheet">#}
+{#    <script src="{% static 'boot-side-menu/BootSideMenu.js' %}"></script>#}
+    <script language="JavaScript">
+{#        var menu = $('#demo').BootSideMenu({#}
+{#            side: "left",#}
+{#            pushBody: false,#}
+{#            autoClose: false,#}
+{#            closeOnClick: true,#}
+{#            duration: 500,#}
+{#            width: '420px'#}
+{#        });#}
+{#        menu.openMenu();#}
+
+    </script>
+{% endblock %}

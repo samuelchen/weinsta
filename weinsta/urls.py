@@ -49,10 +49,14 @@ urlpatterns = [
     url(r'^media/$', views.MediaView.as_view(template_name=t('media.html')), name='media'),
     url(r'^author/$', views.AuthorView.as_view(template_name=t('author.html')), name='author'),
     url(r'^insta/$', views.InstaView.as_view(template_name=t('insta.html')), name='insta'),
+    url(r'^insta/loc/$', views.InstaLocView.as_view(), name='insta_loc'),
     url(r'^weibo/$', views. WeiboView.as_view(template_name=t('weibo.html')), name='weibo'),
     url(r'^twitter/$', views. TwitterView.as_view(template_name=t('twitter.html')), name='twitter'),
-    url(r'^insta/loc/$', views.InstaLocView.as_view(), name='insta_loc'),
-
+    url(r'^campaign/$', views.CampaignView.as_view(template_name=t('campaign.html')), name='campaign'),
     url(r'^pub/(?P<media_id>[0-9]+)/$', views.PubView.as_view(template_name=t('pub.html')), name='pub'),
+
+    # RESTFul RPC views
+    url(r'^api/medias/$', views.rest.MediasJsonView.as_view(), name='rest_medias'),
+
 
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

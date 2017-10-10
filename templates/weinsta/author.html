@@ -7,22 +7,28 @@
 
 {% block content %}
 
-    <div class="container align-left">
+    <div class="align-left">
 
         <form class="form-inline mt-2 mt-md-0" method="get">
 {#            {% csrf_token %}#}
             <div class="form-check form-control-sm">
-                <label class="form-check-label mr-sm-2">
-                    <input class="form-check" type="checkbox" name="artist" {% if filters.artist %}checked{% endif %}>
-                    artist
+                <label class="custom-control custom-checkbox">
+                    <input class="custom-control-input" type="checkbox" name="artist" {% if filters.artist %}checked{% endif %}>
+                    <span class="custom-control-indicator"></span>
+                    <span class="custom-control-description"><i
+                            class="fa fa-id-badge"></i> artist </span>
                 </label>
-                <label class="form-check-label mr-sm-2">
-                    <input class="form-check" type="checkbox" name="publisher" {% if filters.publisher %}checked{% endif %}>
-                    publisher
+                <label class="custom-control custom-checkbox">
+                    <input class="custom-control-input" type="checkbox" name="publisher" {% if filters.publisher %}checked{% endif %}>
+                    <span class="custom-control-indicator"></span>
+                    <span class="custom-control-description"><i
+                            class="fa fa-id-badge"></i> publisher </span>
                 </label>
-                <label class="form-check-label mr-sm-2">
-                    <input class="form-check" type="checkbox" name="user" {% if filters.user %}checked{% endif %}>
-                    user
+                <label class="custom-control custom-checkbox">
+                    <input class="custom-control-input" type="checkbox" name="user" {% if filters.user %}checked{% endif %}>
+                    <span class="custom-control-indicator"></span>
+                    <span class="custom-control-description"><i
+                            class="fa fa-user"></i> user </span>
                 </label>
             </div>
             <input name="query" class="form-control form-control-sm mr-sm-2" type="text" placeholder="Name, Bio"

@@ -32,7 +32,7 @@ a.video::before {
   left: 0;
   /*padding: 1rem;*/
   /*background-color: #efefef;*/
-  /*text-align: center;*/
+  text-align: center;
 }
 
 
@@ -50,6 +50,19 @@ a.video::before {
     border-radius: 4px 0;
 }
 
+.top-left-t {
+    /*font-weight: 600;*/
+    background-color: transparent;
+    /*font-size: 0.7em;*/
+    top: -3px;
+    left: -1px;
+    /*padding: 1px 1px;*/
+    position: absolute;
+    /*color: #9DA0A4;*/
+    /*border: 1px solid #DDD;*/
+    /*border-radius: 4px 0;*/
+}
+
 .top-right {
     font-weight: 600;
     background-color: #F5F5F5;
@@ -62,6 +75,7 @@ a.video::before {
     border: 1px solid #DDD;
     border-radius: 4px 0;
 }
+
 
 .bottom-left {
     font-weight: 600;
@@ -125,3 +139,4 @@ a.video::before {
   margin-top: 4px;
   background-color: #cccccc;
 }
+

@@ -9,7 +9,7 @@ class SocialUserAdmin(admin.ModelAdmin):
     """
     Admin page for Author.
     """
-    list_display = ('pk', 'picture', 'username', 'provider', 'fullname', 'website')
+    list_display = ('pk', 'picture_admin_tag', 'username', 'provider', 'fullname', 'website')
     list_filter = ('provider',)
     search_fields = ['username', 'fullname']
     # raw_id_fields = ('',)

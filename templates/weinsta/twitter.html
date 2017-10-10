@@ -59,28 +59,36 @@
 
 
     <!-- medias -->
+{#    <div id="id_medias" class="row pl-1 mt-2">#}
+{#    {% for m in medias %}#}
+{#        {% if m.entities.media %}#}
+{#        <div class="col-lg-3">#}
+{#            <div class="card mr-2" style="width: 12rem;" >#}
+{#                {% if m.entities.media %}<img class="card-img-top" src="{{ m.entities.media.0.media_url }}" >{% endif %}#}
+{##}
+{#                <div class="card-body small">#}
+{#                    <h6 class="card-title" title="{% trans "Media Owner" %}" data-toggle="tooltip">#}
+{#                        <img class=" rounded-circle mr-1" style="width: 1.3rem; height: 1.3rem"#}
+{#                         src="{{ m.user.profile_image_url }}">#}
+{#                        {{ m.user.name|default_if_none:'Unknown' }} <i class="fa fa-twitter"></i>#}
+{#                    </h6>#}
+{##}
+{#                    <p class="card-text">{{ m.text|default_if_none:'&nbsp;' }}</p>#}
+{#                    <a href="http://twitter.com/{{ m.user.screen_name }}/status/{{ m.id }}" title="{% trans "View on" %} {% trans "Twitter" %}"#}
+{#                       target="_blank" data-toggle="tooltip" class="btn btn-primary btn-sm">#}
+{#                        <i class="fa fa-twitter"></i> {% trans "View" %}</a>#}
+{#                </div>#}
+{#            </div>#}
+{#        </div>#}
+{#        {% endif %}#}
+{#    {% endfor %}#}
+{#    </div>#}
+
     <div id="id_medias" class="row pl-1 mt-2">
     {% for m in medias %}
-        {% if m.entities.media %}
-        <div class="col-lg-3">
-            <div class="card mr-2" {# style="width: 12rem;" #}>
-                {% if m.entities.media %}<img class="card-img-top" src="{{ m.entities.media.0.media_url }}" >{% endif %}
-
-                <div class="card-body small">
-                    <h6 class="card-title" title="{% trans "Media Owner" %}" data-toggle="tooltip">
-                        <img class=" rounded-circle mr-1" style="width: 1.3rem; height: 1.3rem"
-                         src="{{ m.user.profile_image_url }}">
-                        {{ m.user.name|default_if_none:'Unknown' }} <i class="fa fa-twitter"></i>
-                    </h6>
-
-                    <p class="card-text">{{ m.text|default_if_none:'&nbsp;' }}</p>
-                    <a href="http://twitter.com/{{ m.user.screen_name }}/status/{{ m.id }}" title="{% trans "View on" %} {% trans "Twitter" %}"
-                       target="_blank" data-toggle="tooltip" class="btn btn-primary btn-sm">
-                        <i class="fa fa-twitter"></i> {% trans "View" %}</a>
-                </div>
-            </div>
-        </div>
-        {% endif %}
+        {% with media=m.media %}
+        {% include 'weinsta/includes/media-card.html' %}
+        {% endwith %}
     {% endfor %}
     </div>
     <!-- media ends -->

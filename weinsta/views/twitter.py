@@ -63,14 +63,17 @@ class TwitterView(TemplateView, BaseViewMixin):
         client = TwitterClient(token=token)
 
         # async-call
-        # client.fetch_favorites(callback=on_likes)
+        client.fetch_favorites(callback=on_likes)
         # client.fetch_my_own_medias(callback=on_my_medias)
 
         if tab == '1':
             # favorites sync-call
-            context['medias'] = client.fetch_favorites()
-            on_likes(context['medias'])
+            # context['medias'] = client.fetch_favorites()
+            # on_likes(context['medias'])
 
+            context['medias'] = LikedMedia.objects.filter(user=self.request.user,
+                                                          media__provider=SocialProviders.TWITTER
+                                                          ).select_related('media')
         elif tab == '2':
             # search tags
             pass

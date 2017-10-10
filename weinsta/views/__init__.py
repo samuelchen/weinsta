@@ -8,3 +8,5 @@ from .insta import InstaView, InstaLocView
 from .twitter import TwitterView
 from .author import AuthorView
 from .pub import PubView
+from .campaign import CampaignView
+from . import rest

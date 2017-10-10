@@ -1,6 +1,6 @@
 {% load i18n staticfiles %}
 {# Author card (normal size) #}
-{# Vars:  author (author model object) #}
+{# Vars:  author (SocialUser model object) #}
 
         {# ----- Author Card (normal size) ----- #}
         <div class="col-xl-3 col-lg-4 col-md-4 col-sm-6 mt-2">
@@ -19,7 +19,7 @@
                     <p class="card-text">{{ author.bio|default_if_none:'&nbsp;' }}</p>
                     <div>
                     {% for m in author.posted_media.all %}
-                        <img class="mb-1" style="height: 2rem; cursor: pointer;" src="{{ m.get_thumb_url }}"
+                        <img class="mb-1" style="height: 2.5rem; cursor: pointer;" src="{{ m.get_thumb_url }}"
                                 data-toggle="photo" data-url="{{ m.get_pic_low_url }}"
                                 data-title="{{ m.text|default_if_none:m.author|default_if_none:'' }}" >
                     {% endfor %}

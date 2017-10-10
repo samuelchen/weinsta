@@ -11,4 +11,7 @@ from .media import (
     LikedMedia,
     MediaInstance,
 )
+from .campaign import (
+    Campaign,
+)
 from .admin import SocialUserAdmin

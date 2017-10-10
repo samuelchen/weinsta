@@ -1,5 +1,7 @@
 #!/usr/bin/env python
 # coding: utf-8
+from operator import itemgetter
+from allauth.socialaccount.models import SocialAccount
 
 from django.contrib.auth import get_user_model
 from django.db import models
@@ -24,57 +26,56 @@ class SocialProviders(object):
     INSTAGRAM = 'instagram'
     TWITTER = 'twitter'
     WEIBO = 'weibo'
-    _texts = {
-        UNKNOWN: '',        #_(''),
-        INSTAGRAM: _('instagram'),
-        TWITTER: _('twitter'),
-        WEIBO: _('weibo'),
+
+    __metas = {
+        UNKNOWN: (UNKNOWN, '', 'fa fa-question-question-circle '),
+        INSTAGRAM: (INSTAGRAM, _('instagram'), 'fa fa-instagram'),
+        TWITTER: (TWITTER, _('twitter'), 'fa fa-twitter'),
+        WEIBO: (WEIBO, _('weibo'), 'fa fa-weibo'),
     }
-    _icons = {
-        UNKNOWN: 'fa fa-question-circle ',
-        INSTAGRAM: 'fa fa-instagram',
-        TWITTER: 'fa fa-twitter',
-        WEIBO: 'fa fa-weibo',
-    }
-    Choices = _texts.items()
-    Icons = _icons.items()
+
+    Choices = sorted(tuple(map(lambda x: (x[0], x[1]), __metas.values())), key=itemgetter(0))
+    Metas = __metas
 
     @classmethod
     def get_text(cls, code):
-        return cls._texts.get(code)
+        # return cls._texts.get(code)
+        meta = cls.__metas.get(code)
+        return meta[1] if meta else None
 
     @classmethod
     def get_icon(cls, code):
-        return cls._icons.get(code)
+        # return cls._icons.get(code)
+        meta = cls.__metas.get(code)
+        return meta[2] if meta else None
 
 
 class MediaType(object):
-    UNKNOWN = None
+    UNKNOWN = ''
     PHOTO = 'photo'
     VIDEO = 'video'
     AUDIO = 'audio'
-    _texts = {
-        UNKNOWN: _('unknown'),
-        PHOTO: _('photo'),
-        VIDEO: _('video'),
-        AUDIO: _('audio'),
+
+    __metas = {
+        UNKNOWN: (UNKNOWN, _('unknown'), 'fa fa-question'),
+        PHOTO: (PHOTO, _('photo'), 'fa fa-picture '),
+        VIDEO: (VIDEO, _('video'), 'fa fa-video'),
+        AUDIO: (AUDIO, _('audio'), 'fa fa-audio'),
     }
-    _icons = {
-        UNKNOWN: 'fa fa-unknonn',
-        PHOTO: 'fa fa-picture ',
-        VIDEO: 'fa fa-video',
-        AUDIO: 'fa fa-audio',
-    }
-    Choices = _texts.items()
-    Icons = _icons.items()
+
+    Metas = __metas
+    Choices = tuple(map(lambda x: (x[0], x[1]), __metas.values()))
+
 
     @classmethod
     def get_text(cls, code):
-        return cls._texts.get(code)
+        meta = cls.__metas.get(code)
+        return meta[1] if meta else None
 
     @classmethod
     def get_icon(cls, code):
-        return cls._icons.get(code)
+        meta = cls.__metas.get(code)
+        return meta[2] if meta else None
 
     @classmethod
     def from_str(cls, type_str):
@@ -93,45 +94,35 @@ class MediaType(object):
 class MediaQuality(object):
     THUMB = 0
     LOW = 10
-    # MID = 20
     HIGH = 20
     ORIGIN = 100
 
-    _texts = {
-        # ORIGIN: _n('media quality', 'origin'),
-        # THUMB: _n('media quality', 'thumb'),
-        # LOW: _n('media quality', 'low'),
-        # MID: _n('media quality', 'medium'),
-        # HIGH: _n('media quality', 'high'),
-        ORIGIN: _('origin'),
-        THUMB: _('thumb'),
-        LOW: _('low'),
-        # MID: _n('medium'),
-        HIGH: _('high'),
+    __metas = {
+        ORIGIN: (ORIGIN, _('origin'), 'fa fa-origin'),
+        THUMB: (THUMB, _('thumb'), 'fa fa-origin'),
+        LOW: (LOW, _('low'), 'fa fa-low'),
+        HIGH: (HIGH, _('high'), 'fa fa-high'),
     }
-    _icons = {
-        ORIGIN: 'fa fa-origin',
-        THUMB: 'fa fa-origin',
-        LOW: 'fa fa-low',
-        # MID: 'fa fa-mid',
-        HIGH: 'fa fa-high',
-    }
-    Choices = _texts.items()
-    Icons = _icons.items()
+
+    Metas = __metas
+    Choices = tuple(map(lambda x: (x[0], x[1]), __metas.values()))
+
 
     @classmethod
     def get_text(cls, code):
-        return cls._texts.get(code)
+        meta = cls.__metas.get(code)
+        return meta[1] if meta else None
 
     @classmethod
     def get_slug(cls, code):
-        slug = cls._texts.get(code)
+        slug = cls.get_text(code)
         with override('en'):
             return slug
 
     @classmethod
     def get_icon(cls, code):
-        return cls._icons.get(code)
+        meta = cls.__metas.get(code)
+        return meta[2] if meta else None
 
     # @classmethod
     # def from_str(cls, resolution_str):
@@ -232,6 +223,21 @@ class SocialUser(models.Model):
     def get_icon(self):
         return 'fa fa-' + self.provider
 
+    def picture_admin_tag(self):
+        if self.picture:
+            path = os.path.join(settings.MEDIA_URL, str(self.picture.instance))
+        else:
+            path = os.path.join(settings.MEDIA_URL, "weinsta/img/avatar-private.png")
+        return '<img src="%s" style="height:1.2rem;" />' % path
+
+    picture_admin_tag.short_description = 'Picture'
+    picture_admin_tag.allow_tags = True
+
+    @property
+    def is_linked_to_user(self, user):
+        assert isinstance(user, UserMode)
+        return len(SocialAccount.objects.filter(user=user, uid=self.rid)) > 0
+
 
 class Media(models.Model):
     id = models.BigAutoField(primary_key=True)
@@ -249,7 +255,7 @@ class Media(models.Model):
     # mentions = models.TextField(null=True, blank=True, help_text="Mentioned persons in JSON format")
     # authors = models.ManyToManyField(Author)
 
-    type = models.TextField(choices=MediaType.Choices, default=MediaType.PHOTO)
+    type = models.CharField(max_length=50, choices=MediaType.Choices, default=MediaType.PHOTO)
     text = models.TextField(null=True, blank=True)
     tags = models.TextField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True, editable=False)
