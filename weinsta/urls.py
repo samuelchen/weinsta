@@ -52,8 +52,17 @@ urlpatterns = [
     url(r'^insta/loc/$', views.InstaLocView.as_view(), name='insta_loc'),
     url(r'^weibo/$', views. WeiboView.as_view(template_name=t('weibo.html')), name='weibo'),
     url(r'^twitter/$', views. TwitterView.as_view(template_name=t('twitter.html')), name='twitter'),
-    url(r'^campaign/$', views.CampaignView.as_view(template_name=t('campaign.html')), name='campaign'),
     url(r'^pub/(?P<media_id>[0-9]+)/$', views.PubView.as_view(template_name=t('pub.html')), name='pub'),
+
+    # campaign views
+    url(r'^campaign/$', views.CampaignView.as_view(template_name=t('campaign.html')),
+        name=views.CampaignView.view_name),
+    url(r'^campaign/(?P<id>[0-9]+)/$', views.CampaignView.as_view(template_name=t('campaign.html')),
+        name=views.CampaignView.view_name),
+    url(r'^campaign/(?P<id>[0-9]+)/(?P<action>(update|del))/$', views.CampaignView.as_view(
+        template_name=t('campaign.html')), name=views.CampaignView.view_name),
+    url(r'^campaign/(?P<action>new)/$', views.CampaignView.as_view(template_name=t('campaign.html')),
+        name=views.CampaignView.view_name),
 
     # RESTFul RPC views
     url(r'^api/medias/$', views.rest.MediasJsonView.as_view(), name='rest_medias'),

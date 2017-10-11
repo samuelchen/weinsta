@@ -4,5 +4,6 @@ requests
 oauth2
 termcolor
 simplejson
+python-dateutil
 Pillow>=4.0.0
 gunicorn

@@ -3,7 +3,9 @@
 {# Vars:  media (Media model object) #}
 {#        mediatypes (MediaTypes class) #}
 {#        sel (bool. if display for selections) #}
-{#        sel_medias (list of selected media ids (int) . only available shen sel=True. #}
+{#        sel_medias (list of selected medias. only available shen sel=True. #}
+{#        sel_media_ids (list of selected media ids (int) . only available shen sel=True. #}
+{#              sel_medias OR sel_media_ids only need 1. #}
 
 
         {# ----- Author Card (normal size) ----- #}
@@ -24,7 +26,7 @@
                 <div class="card-text small top-left-t">
                     <label class="custom-control custom-checkbox ml-2 mt-2">
                         <input name="sel_media" type="checkbox" class="custom-control-input"
-                               {% if media.id in sel_medias %}checked{% endif %} value="{{ media.id }}">
+                               {% if media in sel_medias or media.id in sel_media_ids %}checked{% endif %} value="{{ media.id }}">
                         <span class="custom-control-indicator"></span>
                         <span class="custom-control-description"></span>
                     </label>

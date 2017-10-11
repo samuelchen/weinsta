@@ -69,12 +69,13 @@ def key_from_var(obj, *args):
             return ''
     return val
 
-@register.simple_tag
-def call_with_args(obj, *args, **kwargs):
-    assert callable(obj)
-    return obj(*args, **kwargs)
+# @register.simple_tag
+# def call_with_args(obj, *args, **kwargs):
+#     print(obj)
+#     assert callable(obj)
+#     return obj(*args, **kwargs)
 
-@register.filter
+@register.simple_tag
 def call_with_func_and_args(obj, method, *args, **kwargs):
     assert hasattr(obj, method)
     func = getattr(obj, method)
