@@ -8,10 +8,9 @@ from django.utils import timezone
 from django.urls import reverse
 from django.views.generic import TemplateView
 from .base import BaseViewMixin
-import logging
-from ..clients import InstagramClient
-from ..models import Campaign, SocialProviders, Media, MediaType
+from ..models import Campaign, SocialProviders, Media, MediaType, CampaignStatus
 from dateutil import parser as dtparser
+import logging
 
 log = logging.getLogger(__name__)
 
@@ -28,7 +27,7 @@ class CampaignView(TemplateView, BaseViewMixin):
         id = kwargs['id'] if 'id' in kwargs else ''
 
         if action:
-            return HttpResponseBadRequest()
+            return HttpResponseRedirect(reverse(CampaignView.view_name, kwargs={'id': id}))
 
         if id:
             camp = Campaign.objects.get(id=id)
@@ -42,23 +41,35 @@ class CampaignView(TemplateView, BaseViewMixin):
         req = request.POST
         action = kwargs['action'] if 'action' in kwargs else ''
         id = kwargs['id'] if 'id' in kwargs else ''
-
         camp = None
+
+        if id:
+            try:
+                camp = Campaign.objects.get(id=id, user=request.user)
+            except Campaign.DoesNotExist as err:
+                return HttpResponseBadRequest(_('Campaign %s of yours is not found.') % id)
+
         if action == 'new':
             camp = Campaign.objects.create(user=request.user, name=_('New Campaign'))
             # return HttpResponseRedirect(reverse(CampaignView.view_name, kwargs={'id': camp.id}))
-        elif action == 'del' and id:
-            log.debug('Deleting campaign %s' % id)
-            camp = Campaign.objects.get(id=id, user=request.user)
-            if not camp:
-                return HttpResponseBadRequest()
+        elif action == 'del' and camp:
+            log.debug('Deleting campaign %s' % camp)
             camp.delete()
             camp = None
-        elif action == 'update' and id:
-            log.debug('Updating campaign %s' % id)
-            camp = Campaign.objects.get(id=id, user=request.user)
-            if not camp:
-                return HttpResponseBadRequest()
+        elif action == 'ready' and camp:
+            log.debug('Making campaign %s ready.' % camp)
+            camp.status = CampaignStatus.READY
+            camp.save()
+        elif action == 'start' and camp:
+            log.debug('Starting campaign %s' % camp)
+            camp.status = CampaignStatus.IN_PROGRESS
+            camp.save()
+        elif action == 'done' and camp:
+            log.debug('Marking campaign %s done.' % camp)
+            camp.status = CampaignStatus.DONE
+            camp.save()
+        elif action == 'update' and camp:
+            log.debug('Updating campaign %s' % camp)
 
             if 'sel_media' in req:
                 sel_medias = req.getlist('sel_media')
@@ -114,6 +125,7 @@ class CampaignView(TemplateView, BaseViewMixin):
 
         context['providers'] = SocialProviders
         context['mediatypes'] = MediaType
+        context['campaignstatus'] = CampaignStatus
 
         context['campaigns'] = Campaign.objects.filter(user=self.request.user).order_by('-timestamp')
         return context

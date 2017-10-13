@@ -13,5 +13,6 @@ from .media import (
 )
 from .campaign import (
     Campaign,
+    CampaignStatus,
 )
 from .admin import SocialUserAdmin

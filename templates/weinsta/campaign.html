@@ -16,20 +16,8 @@
     <!-- Side panel END -->
 
     <div class="container-fluid">
-        <div class="mt-2">
-            <form id="id_form_action" action="{% url 'campaign' %}" method="post">
-                {% csrf_token %}
-                <button id="id_btn_add" class="btn btn-primary" type="submit"
-{#                        data-toggle="collapse" data-target="#id_editor" aria-expanded="false" aria-controls="id_editor"#}
-                        onclick="$('#id_form_action').attr('action','{% url 'campaign' action='new' %}').attr('onsubmit','');">
-                    {% trans "Create campaign" %}</button>
-            {% if thecampaign %}
-                <button id="id_btn_del" class="btn btn-primary" type="submit"
-                    onclick="$('#id_form_action').attr('action','{% url 'campaign' id=thecampaign.id action='del' %}').attr('onsubmit', 'return confirm(\'{% trans "Sure to delete"  %} {{ thecampaign }}? \');');">
-                    {% trans "Delete campaign" %}</button>
-            {% endif %}
-            </form>
-        </div>
+        <form id="id_form_action" action="{% url 'campaign' %}" method="post">
+            {% csrf_token %}
 
 
         <!-- Campaigns list -->
@@ -53,7 +41,7 @@
                     <tr id="id_row_{{ camp.id }}" {% if camp.id == thecampaign.id %}class="table-warning"{% endif %}>
                         <th scope="row" class="d-md-table-cell d-none">{{ camp.id }}</th>
                         <td><a href="{% url 'campaign' camp.id %}">{{ camp.name }}</a></td>
-                        <td><i class="{{ camp.get_status_icon }}"></i></td>
+                        <td title="{{ camp.get_status_text }}"><i class="{{ camp.get_status_icon }}"></i></td>
                         <td>{{ camp.begin|date }}</td>
                         <td class="d-md-table-cell d-none">{{ camp.end|date }}</td>
                         <td>{% for provider in camp.get_providers %}
@@ -116,102 +104,138 @@
 
         <!-- Campaigns list END -->
 
+        <!-- action buttons -->
+        <div class="btn-toolbar" role="toolbar" aria-label="Actions for campaigns">
+            <div class="btn-group mr-2" role="group" aria-label="Actions">
+            <button id="id_btn_add" class="btn btn-outline-primary" type="submit"
+{#                        data-toggle="collapse" data-target="#id_editor" aria-expanded="false" aria-controls="id_editor"#}
+                    onclick="$('#id_form_action').attr('action','{% url 'campaign' action='new' %}').attr('onsubmit','');">
+                <i class="fa fa-plus"></i> {% trans "Create" %}</button>
+            </div>
+            {% if thecampaign %}
+                <div class="btn-group mr-2" role="group" aria-label="Form">
+                    <button id="id_btn_del" class="btn btn-outline-primary" type="submit"
+                        onclick="$('#id_form_action').attr('action','{% url 'campaign' id=thecampaign.id action='del' %}').attr('onsubmit', 'return confirm(\'{% trans "Sure to delete"  %} {{ thecampaign }}? \');');">
+                        <i class="fa fa-remove text-danger"></i> {% trans "Delete" %}</button>
+                    <button type="reset" class="btn btn-outline-primary"><i class="fa fa-undo"></i> {% trans "Reset Form" %}</button>
+                    <button onclick="$('#id_form_action').attr('action','{% url 'campaign' id=thecampaign.id action='update' %}');"
+                        type="submit" class="btn btn-outline-primary"><i class="fa fa-save"></i> {% trans "Save" %}</button>
+                </div>
+
+                <div class="btn-group mr-2" role="group" aria-label="Campaign Status">
+                {% if thecampaign.status == campaignstatus.NEW %}
+                    <button onclick="$('#id_form_action').attr('action','{% url 'campaign' id=thecampaign.id action='ready' %}');"
+                        type="submit" class="btn btn-outline-primary"><i class="fa fa-play-circle-o text-success"></i> {% trans "Ready to Go" %}</button>
+                {% endif %}
+
+                {% if debug and thecampaign.status != campaignstatus.IN_PROGRESS and thecampaign.status != campaignstatus.DONE %}
+                    <button onclick="$('#id_form_action').attr('action','{% url 'campaign' id=thecampaign.id action='start' %}');"
+                        type="submit" class="btn btn-outline-primary"><i class="fa fa-play text-success"></i> {% trans "Start" %}</button>
+                {% endif %}
+
+                {% if thecampaign.status != campaignstatus.DONE %}
+                    <button onclick="$('#id_form_action').attr('action','{% url 'campaign' id=thecampaign.id action='done' %}');"
+                        type="submit" class="btn btn-outline-primary"><i class="fa fa-square-o text-warning"></i> {% trans "Mark Done" %}</button>
+                {% endif %}
+                </div>
+
+            {% endif %}
+
+        </div>
+        <!-- action buttons END -->
+
+
 
         {% if thecampaign %}{% with camp=thecampaign %}
         <!-- campaign editor form -->
-        <div id="id_editor" class="container mt-2">
+        <div id="id_editor" class="mt-2">
             <div class="card card-body">
-                <form id="id_form_update" action="{% url 'campaign' action='update' id=camp.id %}" method="post">
-                    {% csrf_token %}
+{#                <form id="id_form_update" action="{% url 'campaign' action='update' id=camp.id %}" method="post">#}
+{#                    {% csrf_token %}#}
 
-                    <!-- name/title -->
-                    <div class="form-group row">
-                        <label for="id_camp_name" class="col-sm-2 col-form-label">Campaign Name:</label>
-                        <div class="col-sm-10">
-                            <input id="id_camp_name" name="name" type="text" class="form-control"
-                                   value="{{ camp.name }}" placeholder="e.g. Christmas big sale">
-                        </div>
+                <!-- name/title -->
+                <div class="form-group row">
+                    <label for="id_camp_name" class="col-sm-2 col-form-label">Campaign Name:</label>
+                    <div class="col-sm-10">
+                        <input id="id_camp_name" name="name" type="text" class="form-control"
+                               value="{{ camp.name }}" placeholder="e.g. Christmas big sale">
                     </div>
+                </div>
 
-                    <!-- providers -->
-                    <div class="form-group row">
-                        <label for="" class="col-sm-2 col-form-label">Publish to: </label>
-                        <div class="col-sm-10 form-inline">
-                        {% with sel_providers=camp.get_providers %}
-                        {% for provider, meta in providers.Metas.items %}
-                        {% if provider != providers.UNKNOWN %}
-                            <div class="input-group">
-                                <label class="custom-control custom-checkbox">
-                                    <input name="sel_provider" type="checkbox" class="custom-control-input"
-                                           {% if provider in sel_providers %}checked{% endif %}
-                                           value="{{ provider }}">
-                                    <span class="custom-control-indicator"></span>
-                                    <span class="custom-control-description">
-                                        <i class="{{ meta.2 }}"></i> {{ meta.1 }}</span>
-                                </label>
-                            </div>
-                        {% endif %}
+                <!-- providers -->
+                <div class="form-group row">
+                    <label for="" class="col-sm-2 col-form-label">Publish to: </label>
+                    <div class="col-sm-10 form-inline">
+                    {% with sel_providers=camp.get_providers %}
+                    {% for provider, meta in providers.Metas.items %}
+                    {% if meta.3 %} {# meta.3 (bool) - means if you can publish on this provider #}
+                        <div class="input-group">
+                            <label class="custom-control custom-checkbox">
+                                <input name="sel_provider" type="checkbox" class="custom-control-input"
+                                       {% if provider in sel_providers %}checked{% endif %}
+                                       value="{{ provider }}">
+                                <span class="custom-control-indicator"></span>
+                                <span class="custom-control-description">
+                                    <i class="{{ meta.2 }}"></i> {{ meta.1 }}</span>
+                            </label>
+                        </div>
+                    {% endif %}
+                    {% endfor %}
+                    {% endwith %}
+                    </div>
+                </div>
+
+                <!-- text -->
+                <div class="form-group row">
+                    <label for="id_text" class="col-sm-2 col-form-label">Campaign Text:</label>
+                    <div class="col-sm-10">
+                        <textarea id="id_text" name="text" class="form-control" rows="3"
+                              placeholder="e.g. Get latest iPhone with 50% discount.
+    Only 3 days at http://bdgru.com.
+    Follow @bdgru on twitter.">{{ camp.text|default_if_none:'' }}</textarea>
+                        <small class="form-text text-muted">15 (characters count of text)
+                            <a href="#"><i class="fa fa-question-circle"></i> format help</a></small>
+                    </div>
+                </div>
+
+                <!-- Begin/End datetime -->
+                <div class="form-group row">
+                    <div class="col-sm">
+                        <label for="id_begin" class="col-form-label">{% trans "Begin at" %}:</label>
+                        <input class="form-control" type="datetime-local" value="{{ camp.begin|date:'c' }}"
+                               id="id_begin" name="begin">
+                    </div>
+                    <div class="col-sm">
+                        <label for="id_end" class="col-form-label">{% trans "End by" %}:</label>
+                        <input class="form-control" type="datetime-local" value="{{ camp.end|date:'c' }}"
+                               id="id_end" name="end">
+                    </div>
+                </div>
+
+                <!-- medias -->
+                <div class="form-group">
+                    <label for="" class="col-form-label">Selected medias:</label>
+
+                    <div id="id_selected_medias" class="input-group">
+                        {% for media in camp.medias.all %}
+                            {% include 'weinsta/includes/media-card.html' with sel=True media=media mediatypes=mediatypes sel_medias=camp.medias.all %}
                         {% endfor %}
-                        {% endwith %}
-                        </div>
                     </div>
+                    <small class="form-text text-muted"> (meida filter: by time, by provider, by name, by
+                        author, by
+                        type(AI) </small>
+                    {% include 'weinsta/includes/media-selection.html' with target_box="#id_selected_medias" sel_medias=camp.medias.all %}
 
-                    <!-- text -->
-                    <div class="form-group row">
-                        <label for="id_text" class="col-sm-2 col-form-label">Campaign Text:</label>
-                        <div class="col-sm-10">
-                            <textarea id="id_text" name="text" class="form-control" rows="3"
-                                  placeholder="e.g. Get latest iPhone with 50% discount.
-        Only 3 days at http://bdgru.com.
-        Follow @bdgru on twitter.">{{ camp.text|default_if_none:'' }}</textarea>
-                            <small class="form-text text-muted">15 (characters count of text)
-                                <a href="#"><i class="fa fa-question-circle"></i> format help</a></small>
-                        </div>
-                    </div>
+                </div>
 
-                    <!-- Begin/End datetime -->
-                    <div class="form-group row">
-                        <div class="col-sm">
-                            <label for="id_begin" class="col-form-label">{% trans "Begin at" %}:</label>
-                            <input class="form-control" type="datetime-local" value="{{ camp.begin|date:'c' }}"
-                                   id="id_begin" name="begin">
-                        </div>
-                        <div class="col-sm">
-                            <label for="id_end" class="col-form-label">{% trans "End by" %}:</label>
-                            <input class="form-control" type="datetime-local" value="{{ camp.end|date:'c' }}"
-                                   id="id_end" name="end">
-                        </div>
-                    </div>
-
-                    <!-- medias -->
-                    <div class="form-group">
-                        <label for="" class="col-form-label">Selected medias:</label>
-
-                        <div id="id_selected_medias" class="input-group">
-                            {% for media in camp.medias.all %}
-                                {% include 'weinsta/includes/media-card.html' with sel=True media=media mediatypes=mediatypes sel_medias=camp.medias.all %}
-                            {% endfor %}
-                        </div>
-                        <small class="form-text text-muted"> (meida filter: by time, by provider, by name, by
-                            author, by
-                            type(AI) </small>
-                        {% include 'weinsta/includes/media-selection.html' with target_box="#id_selected_medias" sel_medias=camp.medias.all %}
-
-                    </div>
-
-
-                    <div class="form-group text-center">
-                        <button type="reset" class="btn btn-secondary">reset</button>
-                        <button type="submit" class="btn btn-primary">submit</button>
-                    </div>
-
-
-                </form>
+{#                </form>#}
 
             </div>
         </div>
         <!-- Campaign editor form END -->
         {% endwith %}{% endif %}
+
+        </form>
 
     </div>
 

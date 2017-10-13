@@ -27,11 +27,12 @@ class SocialProviders(object):
     TWITTER = 'twitter'
     WEIBO = 'weibo'
 
+    # metas: 0 - code, 1 - text, 2 - icon, 3 - can publish
     __metas = {
-        UNKNOWN: (UNKNOWN, '', 'fa fa-question-question-circle '),
-        INSTAGRAM: (INSTAGRAM, _('instagram'), 'fa fa-instagram'),
-        TWITTER: (TWITTER, _('twitter'), 'fa fa-twitter'),
-        WEIBO: (WEIBO, _('weibo'), 'fa fa-weibo'),
+        UNKNOWN: (UNKNOWN, '', 'fa fa-question-question-circle ', False),
+        INSTAGRAM: (INSTAGRAM, _('instagram'), 'fa fa-instagram', False),
+        TWITTER: (TWITTER, _('twitter'), 'fa fa-twitter', True),
+        WEIBO: (WEIBO, _('weibo'), 'fa fa-weibo', True),
     }
 
     Choices = sorted(tuple(map(lambda x: (x[0], x[1]), __metas.values())), key=itemgetter(0))
@@ -48,6 +49,11 @@ class SocialProviders(object):
         # return cls._icons.get(code)
         meta = cls.__metas.get(code)
         return meta[2] if meta else None
+
+    @classmethod
+    def can_publish(cls, code):
+        meta = cls.__metas.get(code)
+        return meta[3] if meta else False
 
 
 class MediaType(object):

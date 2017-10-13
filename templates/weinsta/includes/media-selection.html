@@ -55,12 +55,11 @@
             $(document).ready(function(){
 
                 // selected media id Array
-                {% if sel_media_ids %}
-                var sel_medias = [].concat({{ sel_media_ids }});
-                {% elif sel_medias %}
-                var sel_medias = [{% for m in sel_medias %}{{ m.id }},{% endfor %}];
-                {% endif %}
-                console.log('seleted medias', sel_medias);
+
+                var sel_medias = {% if sel_media_ids %} [].concat({{ sel_media_ids }})
+                        {% elif sel_medias %} [{% for m in sel_medias %}{{ m.id }},{% endfor %}]
+                        {% else %} [] {% endif %};
+                console.debug('seleted medias', sel_medias);
 
                 // container of medias for selection
                 var media_selection_modal_box = $("#id_media_selection");
@@ -89,7 +88,7 @@
                     // fetch backend medias when modal shows
 
                     var url = "{% url 'rest_medias' %}";
-
+                    console.debug('medias are already loaded = ' + media_selection_loaded);
                     if (!media_selection_loaded) {
                         $.getJSON(url, '', function(resp){
                             $(resp).each(function(idx, obj){

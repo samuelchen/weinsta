@@ -59,7 +59,7 @@ urlpatterns = [
         name=views.CampaignView.view_name),
     url(r'^campaign/(?P<id>[0-9]+)/$', views.CampaignView.as_view(template_name=t('campaign.html')),
         name=views.CampaignView.view_name),
-    url(r'^campaign/(?P<id>[0-9]+)/(?P<action>(update|del))/$', views.CampaignView.as_view(
+    url(r'^campaign/(?P<id>[0-9]+)/(?P<action>(update|del|ready|start|done))/$', views.CampaignView.as_view(
         template_name=t('campaign.html')), name=views.CampaignView.view_name),
     url(r'^campaign/(?P<action>new)/$', views.CampaignView.as_view(template_name=t('campaign.html')),
         name=views.CampaignView.view_name),

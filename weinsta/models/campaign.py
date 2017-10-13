@@ -20,10 +20,10 @@ class CampaignStatus(object):
     DONE = 100
 
     __metas = {
-        NEW: (NEW, _('new'), 'fa fa-gift text-secondary'),
-        READY: (READY, _('ready'), 'fa fa-cube text-success'),
-        IN_PROGRESS: (IN_PROGRESS, _('in progress'), 'fa fa-spin fa-circle-o-notch text-primary'),
-        DONE: (DONE, _('done'), 'fa fa-check-circle text-strike'),
+        NEW: (NEW, _('new'), 'fa fa-gift text-primary'),
+        READY: (READY, _('ready'), 'fa fa-check text-success'),
+        IN_PROGRESS: (IN_PROGRESS, _('in progress'), 'fa fa-spin fa-spinner text-primary'),
+        DONE: (DONE, _('done'), 'fa fa-check-square-o text-muted'),
     }
 
     Metas = __metas
