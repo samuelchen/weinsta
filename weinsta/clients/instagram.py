@@ -22,6 +22,7 @@ log = logging.getLogger(__name__)
 class InstagramClient(SocialClient):
 
     # api_root = 'https://api.instagram.com/v1'
+
     # ------ overrides
 
     def __init__(self, token, provider=SocialProviders.INSTAGRAM, api_root='https://api.instagram.com/v1',
@@ -37,27 +38,43 @@ class InstagramClient(SocialClient):
     def get_token_hash(self):
         return self.token
 
-    # ------ overrides end
+    @classmethod
+    def get_token(cls, user, request=None):
 
-    @staticmethod
-    def get_my_token(request):
+        if not user and request:
+            user = request.user
+
+        provider_id = SocialProviders.INSTAGRAM
         token = None
-        try:
-            provider = registry.by_id(SocialProviders.INSTAGRAM, request)
-            # log.debug('Provider is :' + provider.__class__.__name__)
-            app = SocialApp.objects.get(provider=provider.id)
-            acc = SocialAccount.objects.get(provider=provider.id, user=request.user)
-            token = SocialToken.objects.get(app=app, account=acc).token
-        except KeyError as err:
-            log.exception('Instagram provider is not installed.', err)
-        except SocialApp.DoesNotExist:
-            log.warn('Instagram app is not registered. Register it in admin console.')
-        except SocialAccount.DoesNotExist:
-            log.warn('Instagram account is not connected.')
-        except SocialToken.DoesNotExist:
-            log.warn('Instagram token is not obtained. Login with Instagram first.')
 
-        if token is None:
+        if request:
+            # get from session first
+            tokens = request.session.get('token', None)
+            if not tokens:
+                tokens = request.session['token'] = {}
+            token = tokens.get(provider_id, None)
+
+        if not token:
+            try:
+                provider = registry.by_id(provider_id, request=request)
+                # log.debug('Provider is :' + provider.__class__.__name__)
+                app = SocialApp.objects.get(provider=provider.id)
+                acc = SocialAccount.objects.get(provider=provider.id, user=user)
+                token = SocialToken.objects.get(app=app, account=acc).token
+
+                # cache to session
+                if request:
+                    request.session[provider_id] = token
+            except KeyError as err:
+                log.exception('Instagram provider is not installed.', err)
+            except SocialApp.DoesNotExist:
+                log.warn('Instagram app is not registered. Register it in admin console.')
+            except SocialAccount.DoesNotExist:
+                log.warn('Instagram account is not connected.')
+            except SocialToken.DoesNotExist:
+                log.warn('Instagram token is not obtained. Login with Instagram first.')
+
+        if token is None and request:
             error(request, _(
                 'Token is not found. Check your registered APP or <a href="%s">re-connect</a> Instagram account.'
             ) % reverse('socialaccount_connections'))
@@ -65,6 +82,8 @@ class InstagramClient(SocialClient):
         if settings.DEBUG:
             print(token)
         return token
+
+    # ------ overrides end
 
     def fetch_my_timeline(self, callback=None):
         all_medias = []
@@ -142,7 +161,7 @@ class InstagramClient(SocialClient):
             on_result(r)
             return my_medias
 
-    def save_media(self, media_dict, request, update_if_exists=False, cache_to_local=False):
+    def save_media(self, media_dict, user, update_if_exists=False, cache_to_local=False):
         md = media_dict
         dirty = False
 
@@ -152,7 +171,7 @@ class InstagramClient(SocialClient):
         rlink = md['link']
         rcode = InstagramClient.get_insta_code_from_link(rlink)
 
-        m, created = Media.objects.get_or_create(user=request.user, provider=SocialProviders.INSTAGRAM, rid=rid,
+        m, created = Media.objects.get_or_create(user=user, provider=SocialProviders.INSTAGRAM, rid=rid,
                                                  rcode=rcode)
 
         if created or update_if_exists:

@@ -14,5 +14,14 @@ from .media import (
 from .campaign import (
     Campaign,
     CampaignStatus,
+    Battle,
+    Activity,
+    ActivityType,
+    # CommentActivity,
+    # RePostActivity,
+    # LikeActivity,
+    # ActivityPerson,
+    # ActivityClasses,
 )
 from .admin import SocialUserAdmin
+

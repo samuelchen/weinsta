@@ -35,6 +35,7 @@ class TwitterView(TemplateView, BaseViewMixin):
     def get_context_data(self, **kwargs):
         context = super(TwitterView, self).get_context_data(**kwargs)
 
+        user = self.request.user
         req = self.request.GET
         tab = req.get('tab', '1')
         context['tab'] = tab
@@ -43,20 +44,20 @@ class TwitterView(TemplateView, BaseViewMixin):
 
         def on_likes(likes):
             for md in likes:
-                m = client.save_media(md, self.request, update_if_exists=False, cache_to_local=True)
+                m = client.save_media(md, user, update_if_exists=False, cache_to_local=True)
                 if m:
-                    like, created = LikedMedia.objects.get_or_create(user=self.request.user, media=m)
+                    like, created = LikedMedia.objects.get_or_create(user=user, media=m)
                     if created:
                         like.save()
 
         def on_my_medias(my_medias):
             for md in my_medias:
-                m = client.save_media(md, self.request, update_if_exists=False, cache_to_local=True)
+                m = client.save_media(md, self.request.user, update_if_exists=False, cache_to_local=True)
                 mine, created = MyMedia.objects.get_or_create(user=self.request.user, media=m)
                 if created:
                     mine.save()
 
-        token = TwitterClient.get_my_token(self.request)
+        token = TwitterClient.get_token(user, request=self.request)
         if not token:
             return context
 

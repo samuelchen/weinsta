@@ -17,3 +17,6 @@ if CACHES['default']['BACKEND'] == 'django.core.cache.backends.filebased.FileBas
 
 if not os.path.exists(MEDIA_ROOT):
     os.makedirs(MEDIA_ROOT, mode=0o755, exist_ok=True)
+
+
+TIME_ZONE = 'Asia/Shanghai'

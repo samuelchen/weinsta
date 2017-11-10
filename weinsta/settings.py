@@ -252,3 +252,4 @@ CACHES = {
 MIDDLEWARE.insert(0, 'django.middleware.cache.UpdateCacheMiddleware')
 MIDDLEWARE.append('django.middleware.cache.FetchFromCacheMiddleware')
 CACHE_MIDDLEWARE_SECONDS = 3600
+

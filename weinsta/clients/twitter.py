@@ -40,22 +40,28 @@ class TwitterClient(SocialClient):
     def get_token_hash(self):
         return self.token['token']
 
-    # ------- overrides end
+    @classmethod
+    def get_token(cls, user, request=None):
 
-    @staticmethod
-    def get_my_token(request):
+        if not user and request:
+            user = request.user
 
-        provider_id = 'twitter'
-        tokens = request.session.get('token', None)
-        if not tokens:
-            tokens = request.session['token'] = {}
-        token = tokens.get(provider_id, None)
+        provider_id = SocialProviders.TWITTER
+        token = None
+
+        if request:
+            # get from session first
+            tokens = request.session.get('token', None)
+            if not tokens:
+                tokens = request.session['token'] = {}
+            token = tokens.get(provider_id, None)
+
         if not token:
             try:
-                provider = registry.by_id(provider_id, request)
+                provider = registry.by_id(provider_id, request=request)
                 # log.debug('Provider is :' + provider.__class__.__name__)
                 app = SocialApp.objects.get(provider=provider.id)
-                acc = SocialAccount.objects.get(provider=provider.id, user=request.user)
+                acc = SocialAccount.objects.get(provider=provider.id, user=user)
                 token = SocialToken.objects.get(app=app, account=acc)
 
                 token = {
@@ -64,7 +70,10 @@ class TwitterClient(SocialClient):
                     'token': token.token,
                     'token_secret': token.token_secret
                 }
-                request.session[provider_id] = token
+
+                # cache to session
+                if request:
+                    request.session[provider_id] = token
             except KeyError as err:
                 log.exception('Instagram provider is not installed.', err)
             except SocialApp.DoesNotExist:
@@ -74,7 +83,7 @@ class TwitterClient(SocialClient):
             except SocialToken.DoesNotExist:
                 log.warn('Instagram token is not obtained. Login with Instagram first.')
 
-        if token is None:
+        if token is None and request:
             error(request, _(
                 'Token is not found. Check your registered APP or <a href="%s">re-connect</a> Instagram account.'
             ) % reverse('socialaccount_connections'))
@@ -82,6 +91,8 @@ class TwitterClient(SocialClient):
         if settings.DEBUG:
             print(token)
         return token
+
+    # ------- overrides end
 
     def fetch_favorites(self, callback=None):
         endpoint = 'favorites/list.json'
@@ -96,7 +107,7 @@ class TwitterClient(SocialClient):
             # result = json.loads(result)
             return result
 
-    def save_media(self, media_dict, request, update_if_exists=False, cache_to_local=False):
+    def save_media(self, media_dict, user, update_if_exists=False, cache_to_local=False):
         md = media_dict
         m = None
 
@@ -146,7 +157,7 @@ class TwitterClient(SocialClient):
                     assert t != MediaType.UNKNOWN
 
                     # create a Media object for this media.
-                    m, created = Media.objects.get_or_create(user=request.user, provider=SocialProviders.TWITTER,
+                    m, created = Media.objects.get_or_create(user=user, provider=SocialProviders.TWITTER,
                                                              rid=rid, rcode=str(code))
 
                     if created or update_if_exists:

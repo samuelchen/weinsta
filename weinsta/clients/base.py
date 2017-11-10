@@ -5,13 +5,16 @@ import abc
 from concurrent.futures import ThreadPoolExecutor
 import os
 import logging
-from queue import Queue
 from django.db import IntegrityError
 import requests
 from django.core.cache import cache
 from ..models import Media, MediaInstance, MediaQuality, SocialUser, MediaType
 
 log = logging.getLogger(__name__)
+
+
+class SocialClientException(Exception):
+    pass
 
 
 class SocialClient(object, metaclass=abc.ABCMeta):
@@ -75,6 +78,40 @@ class SocialClient(object, metaclass=abc.ABCMeta):
         """
         raise NotImplementedError
 
+    @abc.abstractmethod
+    def get_status(self, rid):
+        """
+        """
+        raise NotImplementedError
+
+    @abc.abstractmethod
+    def post_status(self, text, medias=[]):
+        """
+        Post a status
+        :param text: text to be posted. truck if over platform limitation
+        :param medias: Medias objects to be post in status. number by platform limitation
+        :return
+        """
+        # TODO: return value need to be unified.
+        raise NotImplementedError
+
+    @abc.abstractmethod
+    def get_activity_data(self, rid):
+        """
+        Get status data for activities such as reply, like or repost.
+        :param rid: remote status id in str
+        :return dict of activity data.
+        """
+        raise NotImplementedError
+
+    # ----- class method
+
+    @abc.abstractclassmethod
+    def get_token(self, user, request=None):
+        raise NotImplementedError
+
+
+
     # @abc.abstractmethod
     # def save_media(self, media_dict, download_media=False, callback=None):
     #     """
@@ -91,23 +128,34 @@ class SocialClient(object, metaclass=abc.ABCMeta):
     #     """
     #     raise NotImplementedError
 
+    # ---- common methods ----
+
     def invoke_async(self, endpoint, method='get', callback=None, **kwargs):
         """
         Invoke a RESTful API asynchronously
         """
-
+        method = method.lower()
         assert method in ['get', 'post', 'delete', 'update', 'option']
 
         url = '%s/%s' % (self.api_root, endpoint)
 
-        cached_obj = cache.get(self.get_token_hash() + '_' + url)
-        if cached_obj:
-            log.debug('cache hit %s' % url)
-            if callback:
-                callback(cached_obj)
-            return
-        else:
-            log.debug('cache missed %s' % url)
+        cache_key = None
+        if method in ['get', ]:
+            # gen cache key
+            if 'params' in kwargs:
+                d = kwargs['params']
+                params = '?' + '&'.join([k + '='+str(d[k]) for k in sorted(d.keys())])
+            else:
+                params = '?access_token=' + self.get_token_hash()
+            cache_key = url + params
+
+        if cache_key:
+            cached_obj = cache.get(cache_key)
+            if cached_obj:
+                log.debug('cache hit %s' % url)
+                return cached_obj
+            else:
+                log.debug('cache missed %s' % url)
 
         session = requests.Session()
         self.prepare_invoking(session)
@@ -121,7 +169,9 @@ class SocialClient(object, metaclass=abc.ABCMeta):
             if 200 > r.status_code or r.status_code >= 400:
                 log.error('%d %s. "%s". %s' % (r.status_code, r.reason, endpoint, obj))
             else:
-                cache.set(self.get_token_hash() + '_' + url, obj)
+                if cache_key:
+                    cache.set(self.get_token_hash() + '_' + url, obj)
+
             if callback:
                 callback(obj)
 
@@ -131,9 +181,9 @@ class SocialClient(object, metaclass=abc.ABCMeta):
 
     def invoke(self, endpoint, method='get', **kwargs):
         """
-        Invoke a RESTful API asynchronously
+        Invoke a RESTful API synchronously
         """
-
+        method = method.lower()
         assert method in ['get', 'post', 'delete', 'update', 'option']
 
         if endpoint.startswith('http'):
@@ -141,26 +191,39 @@ class SocialClient(object, metaclass=abc.ABCMeta):
         else:
             url = '%s/%s' % (self.api_root, endpoint)
 
-        cached_obj = cache.get(self.get_token_hash() + '_' + url)
-        if cached_obj:
-            log.debug('cache hit %s' % url)
-            return cached_obj
-        else:
-            log.debug('cache missed %s' % url)
+        cache_key = None
+        if method in ['get', ]:
+            # gen cache key
+            if 'params' in kwargs:
+                d = kwargs['params']
+                params = '?' + '&'.join([k + '='+str(d[k]) for k in sorted(d.keys())])
+            else:
+                params = '?access_token=' + self.get_token_hash()
+            cache_key = url + params
+
+        if cache_key:
+            # store to cache
+            cached_obj = cache.get(cache_key)
+            if cached_obj:
+                log.debug('cache hit %s' % url)
+                return cached_obj
+            else:
+                log.debug('cache missed %s' % url)
 
         session = requests.Session()
         self.prepare_invoking(session)
 
         func = getattr(session, method.lower())
         r = func(url, proxies=self.proxies, **kwargs)
-        log.debug('%s invoking %s.' % (r.status_code, url))
+        log.debug('%s invoking %s. kwargs: %s' % (r.status_code, r.url, kwargs))
         # log.debug(r.headers)
         # log.debug(r.content)
         obj = r.json()
         if 200 > r.status_code or r.status_code >= 400:
             log.error('%d %s. "%s". %s' % (r.status_code, r.reason, endpoint, obj))
         else:
-            cache.set(self.get_token_hash() + '_' + url, obj)
+            if cache_key:
+                cache.set(self.get_token_hash() + '_' + url, obj)
 
         return obj
 
@@ -304,3 +367,10 @@ class SocialClient(object, metaclass=abc.ABCMeta):
             u.save()
             log.debug('[SAVED] %s' % u)
         return u
+
+
+class CampaignMixin(object, metaclass=abc.ABCMeta):
+    pass
+    # @abc.abstractmethod
+    # def start_campaign(self, camp):
+    #     raise NotImplementedError

@@ -33,20 +33,20 @@ class InstaView(TemplateView, BaseViewMixin):
         tab = req.get('tab', 'medias')
         context['tab'] = tab
 
-        token = InstagramClient.get_my_token(self.request)
+        token = InstagramClient.get_token(user=self.request.user, request=self.request)
         if token:
             client = InstagramClient(token=token)
 
             def on_likes(likes):
                 for md in likes:
-                    m = client.save_media(md, self.request, update_if_exists=False, cache_to_local=True)
+                    m = client.save_media(md, self.request.user, update_if_exists=False, cache_to_local=True)
                     like, created = LikedMedia.objects.get_or_create(user=self.request.user, media=m)
                     if created:
                         like.save()
 
             def on_my_medias(my_medias):
                 for md in my_medias:
-                    m = client.save_media(md, self.request, update_if_exists=False, cache_to_local=True)
+                    m = client.save_media(md, self.request.user, update_if_exists=False, cache_to_local=True)
                     mine, created = MyMedia.objects.get_or_create(user=self.request.user, media=m)
                     if created:
                         mine.save()

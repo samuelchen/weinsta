@@ -13,7 +13,7 @@ from django.utils.translation import pgettext_lazy, ugettext_noop, override, uge
 import simplejson as json
 import logging
 import hashlib
-
+from allauth.socialaccount.providers import instagram, twitter, weibo
 
 log = logging.getLogger(__name__)
 # FS = FileSystemStorage(location=os.path.abspath(os.path.join(settings.MEDIA_ROOT, 'authors')))
@@ -23,9 +23,9 @@ UserMode = get_user_model()
 
 class SocialProviders(object):
     UNKNOWN = ''
-    INSTAGRAM = 'instagram'
-    TWITTER = 'twitter'
-    WEIBO = 'weibo'
+    INSTAGRAM = instagram.provider.provider_classes[0].id
+    TWITTER = twitter.provider.provider_classes[0].id
+    WEIBO = weibo.provider.provider_classes[0].id
 
     # metas: 0 - code, 1 - text, 2 - icon, 3 - can publish
     __metas = {
