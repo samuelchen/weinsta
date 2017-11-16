@@ -78,3 +78,6 @@ urlpatterns = [
 
 
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+
+if settings.DEBUG:
+    urlpatterns.append(url(r'^test/$', views.TestView.as_view(template_name=t('test.html')), name='test'))

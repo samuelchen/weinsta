@@ -11,4 +11,5 @@ from .pub import PubView
 from .campaign import CampaignView
 from .activity import ActivityView
 from .battle import BattleView
+from .test import TestView
 from . import rest

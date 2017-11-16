@@ -1,0 +1,1 @@
+celery -A weinsta worker -P eventlet
