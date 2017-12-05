@@ -3,6 +3,7 @@
 import os
 from urllib.parse import quote
 from django.db import IntegrityError
+from django.shortcuts import redirect
 from django.urls import reverse
 from django.conf import settings
 from django.contrib.messages import error
@@ -13,7 +14,7 @@ from allauth.socialaccount.providers import registry
 from allauth.socialaccount.models import SocialAccount, SocialToken, SocialApp
 import requests
 from requests_oauthlib import OAuth1
-from .base import SocialClient, SocialClientException
+from .base import SocialClient, SocialClientException, SocialTokenException
 from ..models import SocialProviders, Media, MediaInstance, MediaQuality, MediaType, ActivityType
 import simplejson as json
 import logging
@@ -62,7 +63,18 @@ class WeiboClient(SocialClient):
                 # log.debug('Provider is :' + provider.__class__.__name__)
                 app = SocialApp.objects.get(provider=provider.id)
                 acc = SocialAccount.objects.get(provider=provider.id, user=user)
-                token = SocialToken.objects.get(app=app, account=acc).token
+                token = SocialToken.objects.get(app=app, account=acc)
+
+                # refresh token
+                # weibo does not provide refresh_token. connect again or raise exception.
+                if timezone.now() > token.expires_at:
+                    # url = '/accounts/weibo/login/?process=connect'
+                    # if request:
+                    #     pass
+                    # else:
+                    raise SocialTokenException('Weibo token expired.')
+
+                token = token.token
 
                 # cache to session
                 if request:
@@ -74,13 +86,12 @@ class WeiboClient(SocialClient):
             except SocialAccount.DoesNotExist:
                 log.warn('Weibo account is not connected.')
             except SocialToken.DoesNotExist:
-                log.warn('Weibo token is not obtained. Login with Instagram first.')
+                log.warn('Weibo token is not obtained. Login with Weibo first.')
 
         if token is None and request:
             error(request, _(
                 'Token is not found. Check your registered APP or <a href="%s">re-connect</a> Weibo account.'
             ) % reverse('socialaccount_connections'))
-
         return token
 
     def get_activity_data(self, rid):

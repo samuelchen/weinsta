@@ -12,5 +12,5 @@ gunicorn
 celery>=4.1
 django-celery-results
 sqlalchemy>=1.1.15
-
 eventlet    # for celery worker on window. $celery -A <mymodule> worker -l info -P eventlet
+django-celery-beat

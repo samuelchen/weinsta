@@ -20,12 +20,11 @@ class BattleException(Exception):
 
 class CampaignGeneral(CampaignMixin):
 
-    def __init__(self, campaign, user, request=None):
+    def __init__(self, campaign, request=None):
         assert isinstance(campaign, Campaign)
         self._camp = campaign
-        self._user = user
         self._request = request
-        self._clients = SocialClientManager.get_clients(self._camp.get_providers(), user)
+        self._clients = SocialClientManager.get_clients(self._camp.get_providers(), self._camp.user)
         # log.debug('clients: %s' % self._clients)
 
     @property

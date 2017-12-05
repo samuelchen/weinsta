@@ -48,6 +48,9 @@ INSTALLED_APPS = [
     'allauth.socialaccount.providers.twitter',
 
     'weinsta',
+
+    # celery tasks
+    'django_celery_beat',
 ]
 
 MIDDLEWARE = [

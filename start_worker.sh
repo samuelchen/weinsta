@@ -1,1 +1,1 @@
-celery -A weinsta worker
+celery worker -A weinsta -l info

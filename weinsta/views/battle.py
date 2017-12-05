@@ -15,6 +15,7 @@ from .base import BaseViewMixin
 from .. import settings
 from ..clients import CampaignGeneral
 from ..models import Campaign, SocialProviders, Media, MediaType, CampaignStatus, ActivityType, Battle, Activity
+from weinsta.clients.base import SocialTokenException
 
 log = logging.getLogger(__name__)
 
@@ -50,7 +51,7 @@ class BattleView(TemplateView, BaseViewMixin):
                 battle = Battle.objects.get(id=battle_id)
                 context['thebattle'] = battle
 
-                # TODO: optimization required. (activity grows fast)
+                # TODO: optimization required. (because activity grows fast)
                 data = {}
                 for t in ActivityType.Metas.keys():
                     data[t] = {}
@@ -82,13 +83,15 @@ class BattleView(TemplateView, BaseViewMixin):
                 return HttpResponseBadRequest(_('Campaign %s of yours is not found.') % id)
 
         if action == 'track' and camp:
-            general = CampaignGeneral(campaign=camp, user=request.user)
             try:
+                general = CampaignGeneral(campaign=camp, request=request)
                 general.track()
             except Exception as err:
                 log.exception(err)
-                kwargs['error'] = str(err)
-                error(request, str(err))
+                s = str(err)
+                if isinstance(err, SocialTokenException):
+                    s += _(' Please <a href="%s">re-connect</a> your social account.') % reverse('socialaccount_connections')
+                error(request, s)
         # if camp:
         #     context['thecampaign'] = camp
 

@@ -18,6 +18,7 @@ from ..models import Campaign, SocialProviders, Media, MediaType, CampaignStatus
 
 log = logging.getLogger(__name__)
 
+# TODO: NOT in use. REMOVE.
 
 @method_decorator(login_required, name='dispatch')
 class ActivityView(TemplateView, BaseViewMixin):

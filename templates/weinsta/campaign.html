@@ -2,25 +2,22 @@
 
 {% block head_title %}{% trans "Campaign" %} - {% endblock %}
 
-{% block extra_head %}
-
-{% endblock %}
+{% block extra_head %}{% endblock %}
 
 {% block content %}
-
 
     <div class="container-fluid">
         <form id="id_form_action" action="{% url 'campaign' %}" method="post">
             {% csrf_token %}
 
-        <!-- Side panel -->
-        <div id="id_side_panel" class="container">
+            <!-- Side panel -->
+            <div id="id_side_panel" class="container">
 
-        </div>
-        <!-- Side panel END -->
+            </div>
+            <!-- Side panel END -->
 
-        <!-- Campaigns list -->
-{#        <div class="card card-body mt-2">#}
+            <!-- Campaigns list -->
+            <div>
                 <table class="table table-responsive table-striped table-sm table-hover mt-2 small">
                     <thead>
                     <tr>
@@ -61,223 +58,38 @@
                     </tr>
                     {% endfor %}
 
-
-                    <!--
-                    <tr>
-                        <th scope="row" class="d-md-table-cell d-none">1</th>
-                        <td>Brand new logo</td>
-                        <td>ready</td>
-                        <td>2017/10/10</td>
-                        <td>2017/10/24</td>
-                        <td>twitter, instagram</td>
-                        <td class="d-lg-table-cell d-none">1, 2, 3</td>
-                        <td class="d-lg-table-cell d-none">New log to show</td>
-                    </tr>
-
-                    <tr>
-                        <th scope="row" class="d-md-table-cell d-none">2</th>
-                        <td>Christmas/New Year Sale</td>
-                        <td>new</td>
-                        <td>2017/12/20</td>
-                        <td>2018/1/5</td>
-                        <td>twitter, facebook, instagram</td>
-                        <td class="d-lg-table-cell d-none">7, 19</td>
-                        <td class="d-lg-table-cell d-none">Yearly Chrismas sale. BIG discount from 50%! come to http://bdgru.com/c/123/ </td>
-                    </tr>
-                    <tr>
-                        <th scope="row" class="d-md-table-cell d-none">3</th>
-                        <td>promote new car</td>
-                        <td>on going</td>
-                        <td>2017/9/3</td>
-                        <td>2017/11/27</td>
-                        <td>twitter, weibo</td>
-                        <td class="d-lg-table-cell d-none">3, 5</td>
-                        <td class="d-lg-table-cell d-none">New Benz SUV</td>
-                    </tr>
-                    -->
-
-
                     </tbody>
                 </table>
-{#            </div>#}
-
-        {% include 'weinsta/includes/photo-viewer.html' %}
-
-        <!-- Campaigns list END -->
-
-        <!-- action buttons -->
-        <div class="btn-toolbar" role="toolbar" aria-label="Actions for campaigns">
-            <div class="btn-group mr-2" role="group" aria-label="Actions">
-            <button id="id_btn_add" class="btn btn-outline-primary" type="submit"
-{#                        data-toggle="collapse" data-target="#id_editor" aria-expanded="false" aria-controls="id_editor"#}
-                    onclick="$('#id_form_action').attr('action','{% url 'campaign' action='new' %}').attr('onsubmit','');">
-                <i class="fa fa-plus"></i> {% trans "Create" %}</button>
             </div>
-            {% if thecampaign %}
-                <div class="btn-group mr-2" role="group" aria-label="Form">
-                    <button id="id_btn_del" class="btn btn-outline-primary" type="submit"
-                        onclick="$('#id_form_action').attr('action','{% url 'campaign' id=thecampaign.id action='del' %}').attr('onsubmit', 'return confirm(\'{% trans "Sure to delete"  %} {{ thecampaign }}? \');');">
-                        <i class="fa fa-remove text-danger"></i> {% trans "Delete" %}</button>
-                    <button type="reset" class="btn btn-outline-primary"><i class="fa fa-undo"></i> {% trans "Reset Form" %}</button>
-                    {% if thecampaign.status < campaignstatus.READY %}
-                    <button onclick="$('#id_form_action').attr('action','{% url 'campaign' id=thecampaign.id action='update' %}');"
-                        type="submit" class="btn btn-outline-primary"><i class="fa fa-save"></i> {% trans "Save" %}</button>
-                    {% endif %}
-                </div>
 
-                <div class="btn-group mr-2" role="group" aria-label="Campaign Status">
-                {% if thecampaign.status == campaignstatus.NEW %}
-                    <button onclick="$('#id_form_action').attr('action','{% url 'campaign' id=thecampaign.id action='ready' %}');"
-                        type="submit" class="btn btn-outline-primary"><i class="fa fa-play-circle-o text-success"></i> {% trans "Ready to Go" %}</button>
-                {% endif %}
+            {% include 'weinsta/includes/photo-viewer.html' %}
+            <!-- Campaigns list END -->
 
-                {% if debug and thecampaign.status != campaignstatus.IN_PROGRESS and thecampaign.status != campaignstatus.DONE %}
-                    <button onclick="$('#id_form_action').attr('action','{% url 'campaign' id=thecampaign.id action='start' %}');"
-                        type="submit" class="btn btn-outline-primary"><i class="fa fa-play text-success"></i> {% trans "Start" %}</button>
-                {% endif %}
+        {% include 'weinsta/includes/campaign-action-buttons.html' with campaign=thecampaign target_form="#id_form_action" small=True disables=disabled_buttons %}
 
-                {% if thecampaign.status != campaignstatus.DONE %}
-                    <button onclick="$('#id_form_action').attr('action','{% url 'campaign' id=thecampaign.id action='done' %}');"
-                        type="submit" class="btn btn-outline-primary"><i class="fa fa-check-square-o text-secondary"></i> {% trans "Mark Done" %}</button>
-                {% endif %}
+        {% if action == 'detail' %}
+            <div class="mt-2">
+                {% include 'weinsta/includes/campaign-form.html' with campaign=thecampaign target_form="#id_form_action" small=True %}
+            </div>
+        {% else %}
+            {% include 'weinsta/includes/campaign-battles.html' with campaign=thecampaign battle=thebattle activitytypes=activitytypes small=True %}
+            {% include 'weinsta/includes/battle-chart.html' with battle=thebattle activitytypes=activitytypes chart_data=chart_data %}
 
-                {% if thecampaign.status != campaignstatus.IN_PROGRESS and thecampaign.status != campaignstatus.NEW %}
-                    <button onclick="$('#id_form_action').attr('action','{% url 'campaign' id=thecampaign.id action='renew' %}');"
-                        type="submit" class="btn btn-outline-primary"><i class="fa fa-refresh text-secondary"></i> {% trans "Renew" %}</button>
-                {% endif %}
-                </div>
-
-                <div class="btn-group mr-2" role="group" aria-label="Links">
-                    <a class="btn btn-outline-primary" href="{% url 'battle' action='battle' id=thecampaign.id %}">Battles</a>
-                </div>
-
-            {% endif %}
-
-        </div>
-        <!-- action buttons END -->
-
-
-        {% if thecampaign %}{% with camp=thecampaign %}
-        <!-- campaign editor form -->
-        <div id="id_editor" class="mt-2">
-            <div class="card card-body">
-{#                <form id="id_form_update" action="{% url 'campaign' action='update' id=camp.id %}" method="post">#}
-{#                    {% csrf_token %}#}
-
-                <!-- name/title -->
-                <div class="form-group row">
-                    <label for="id_camp_name" class="col-md-2 col-form-label">Campaign Name:</label>
-                    <div class="col-md-10">
-                        <input id="id_camp_name" name="name" type="text" class="form-control"
-                               value="{{ camp.name }}" placeholder="e.g. Christmas big sale">
-                    </div>
-                </div>
-
-                <!-- providers -->
-                <div class="form-group row">
-                    <label for="" class="col-md-2 col-form-label">Publish to: </label>
-                    <div class="col-md-10 form-inline">
-                    {% with sel_providers=camp.get_providers %}
-                    {% for provider, meta in providers.Metas.items %}
-                    {% if meta.3 %} {# meta.3 (bool) - means if support to post status on this provider #}
-                        <div class="input-group">
-                            <label class="custom-control custom-checkbox">
-                                <input name="sel_provider" type="checkbox" class="custom-control-input"
-                                       {% if provider in sel_providers %}checked{% endif %}
-                                       value="{{ provider }}">
-                                <span class="custom-control-indicator"></span>
-                                <span class="custom-control-description">
-                                    <i class="{{ meta.2 }}"></i> {{ meta.1 }}</span>
-                            </label>
-                        </div>
-                    {% endif %}
-                    {% endfor %}
-                    {% endwith %}
-                    </div>
-                </div>
-
-                <!-- text -->
-                <div class="form-group row">
-                    <label for="id_text" class="col-md-2 col-form-label">Campaign Text:</label>
-                    <div class="col-md-10">
-                        <textarea id="id_text" name="text" class="form-control" rows="3"
-                              placeholder="e.g. Get latest iPhone with 50% discount.
-    Only 3 days at http://bdgru.com.
-    Follow @bdgru on twitter.">{{ camp.text|default_if_none:'' }}</textarea>
-                        <small class="form-text text-muted"><span id="id_txt_cnt">15</span>
-                            ({% trans "Count of chars. Limited on some channels." %})
-                            <a href="#"><i class="fa fa-question-circle"></i> help</a></small>
-                    </div>
-                </div>
-
-                <!-- Begin/End datetime -->
-                {# TODO: verify the datetime timezone #}
-                <div class="form-group row">
-                    <div class="col-sm">
-                        <label for="id_begin" class="col-form-label">{% trans "Begin at" %}:</label>
-                        <input class="form-control" type="datetime-local" value="{{ camp.begin|date:'Y-m-d\TH:i:s' }}"
-                               id="id_begin" name="begin">
-                    </div>
-                    <div class="col-sm">
-                        <label for="id_end" class="col-form-label">{% trans "End by" %}:</label>
-                        <input class="form-control" type="datetime-local" value="{{ camp.end|date:'Y-m-d\TH:i:s' }}"
-                               id="id_end" name="end">
-                    </div>
-                </div>
-
-                <!-- medias -->
-                <div class="form-group">
-                    <label for="" class="col-form-label">Selected medias:</label>
-
-                    <div id="id_selected_medias" class="input-group">
-                        {% for media in camp.medias.all %}
-                            {% include 'weinsta/includes/media-card.html' with sel=True media=media mediatypes=mediatypes sel_medias=camp.medias.all %}
-                        {% endfor %}
-                    </div>
-                    <small class="form-text text-muted"> ({% trans "Weibo: MUST 1 media. Twitter: Max 9 medias." %})
-                    <a href="#"><i class="fa fa-question-circle"></i> help</a></small></small>
-                    {% include 'weinsta/includes/media-selection.html' with target_box="#id_selected_medias" sel_medias=camp.medias.all %}
-
-                </div>
-
-{#                </form>#}
+            <div class="form-inline form-control-sm">
+                <label for="id_add_battle_url" class="form-control-label mr-2">Channel url for track: </label>
+                <input id="id_add_battle_url" type="text" class="form-control col-6">
+                <button onclick="$('{{ target_form }}').attr('action','{% url 'campaign' id=battle.id action='add' %}');"
+                    type="submit" class="btn btn-outline-primary"><i class="fa fa-eye"></i> {% trans "Add" %}</button>
 
             </div>
-        </div>
-        <!-- Campaign editor form END -->
-        {% endwith %}{% endif %}
+        {% endif %}
 
         </form>
-
     </div>
 
 {% endblock %}
 
 
 {% block script %}
-{#    <link href="{% static 'boot-side-menu/BootSideMenu.css' %}" rel="stylesheet">#}
-{#    <script src="{% static 'boot-side-menu/BootSideMenu.js' %}"></script>#}
-    <script language="JavaScript">
-{#        var menu = $('#id_side_panel').BootSideMenu({#}
-{#            side: "right",#}
-{#            pushBody: true,#}
-{#            autoClose: false,#}
-{#            closeOnClick: true,#}
-{#            duration: 500,#}
-{#            width: '420px'#}
-{#        });#}
-{#        menu.openMenu();#}
 
-        $(document).ready(function(){
-{#            window.location = window.location + '#id_row_{{ thecampaign.id }}';#}
-{#           $("#id_btn_add").click(function(){#}
-{#               $("#id_action");#}
-{#           });#}
-
-            var id_txt_cnt = $("#id_txt_cnt");
-            $("#id_text").keydown(function(e){
-                id_txt_cnt.text($(this).val().length);
-            });
-        });
-    </script>
 {% endblock %}

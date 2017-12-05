@@ -1,1 +1,1 @@
-celery -A weinsta worker -P eventlet
+celery worker -A weinsta -P eventlet -l debug

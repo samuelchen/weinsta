@@ -3,7 +3,7 @@
 
 from django.views.generic import TemplateView
 from .base import BaseViewMixin
-from weinsta.celery import debug_task
+from tasks.campaign import track_battle, test
 import logging
 
 log = logging.getLogger(__name__)
@@ -13,7 +13,8 @@ log = logging.getLogger(__name__)
 class TestView(TemplateView, BaseViewMixin):
 
     def get(self, request, *args, **kwargs):
-        debug_task.delay()
+        test.delay()
+        track_battle.delay()
         return super(TestView, self).get(request, *args, **kwargs)
 
     def get_context_data(self, **kwargs):

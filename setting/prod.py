@@ -4,6 +4,9 @@
 from weinsta.settings import *
 
 
+DEBUG = False
+ALLOWED_HOSTS = ['bdgru.com', 'www.bdgru.com']
+
 PROXIES = {
 
 }
@@ -20,3 +23,4 @@ if not os.path.exists(MEDIA_ROOT):
 
 
 TIME_ZONE = 'Asia/Shanghai'
+

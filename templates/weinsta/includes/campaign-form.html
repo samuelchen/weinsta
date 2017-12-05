@@ -1,0 +1,133 @@
+{% load i18n staticfiles %}
+{# Campaign form controlls #}
+{# Vars:  campaign (Campaign Model object) #}
+{#        target_form (form id selector string. e.g. "#id_my_form") #}
+{#        small (bool, optional. default False. Small size control and text.) #}
+{#        ro (bool, optional, default False. Whether form is readonly. #}
+{# Names: camp_name, camp_provider (checkbox), camp_text, camp_begin, camp_end, camp_me #}
+
+            <!-- campaign editor form -->
+            {% if campaign %}{% with camp=campaign %}
+
+                <div id="id_campaign_detail" class="{% if small %}small{% endif %}">
+
+                    <div class="card-title text-center">{% if small %}<h6>{% else %}<h5>{% endif %}
+                        {% trans "Detail of campaign" %} - {{ campaign }}
+                    {% if small %}<h6>{% else %}<h5>{% endif %}</div>
+
+                    <div class="card card-body">
+
+                        <!-- name/title -->
+                        <div class="form-group row">
+                            <label for="id_camp_name" class="col-md-2 col-form-label">Campaign Name:</label>
+                            <div class="col-md-10">
+                                <input id="id_camp_name" name="camp_name" type="text" {% if ro %}readonly{% endif %}
+                                       class="form-control {% if small %}form-control-sm{% endif %}"
+                                       value="{{ camp.name }}" placeholder="e.g. Christmas big sale">
+                            </div>
+                        </div>
+
+                        <!-- providers -->
+                        <div class="form-group row">
+                            <label for="" class="col-md-2 col-form-label">Publish to: </label>
+                            <div class="col-md-10 form-inline">
+                            {% with sel_providers=camp.get_providers %}
+                            {% for provider, meta in providers.Metas.items %}
+                            {% if meta.3 %} {# meta.3 (bool) - means if support to post status on this provider #}
+                                <div class="input-group">
+                                    <label class="custom-control custom-checkbox">
+                                        <input name="camp_provider" type="checkbox" class="custom-control-input"
+                                               {% if provider in sel_providers %}checked{% endif %}
+                                               value="{{ provider }}" {% if ro %}readonly{% endif %}>
+                                        <span class="custom-control-indicator"></span>
+                                        <span class="custom-control-description">
+                                            <i class="{{ meta.2 }}"></i> {{ meta.1 }}</span>
+                                    </label>
+                                </div>
+                            {% endif %}
+                            {% endfor %}
+                            {% endwith %}
+                            </div>
+                        </div>
+
+                        <!-- text -->
+                        <div class="form-group row">
+                            <label for="id_camp_text" class="col-md-2 col-form-label">Campaign Text:</label>
+                            <div class="col-md-10">
+                                <textarea id="id_camp_text" name="camp_text" rows="3" {% if ro %}readonly{% endif %}
+                                          class="form-control {% if small %}form-control-sm{% endif %}"
+                                      placeholder="e.g. Get latest iPhone with 50% discount.
+            Only 3 days at http://bdgru.com.
+            Follow @bdgru on twitter.">{{ camp.text|default_if_none:'' }}</textarea>
+                                <small class="form-text text-muted"><span id="id_camp_txt_cnt">0</span>
+                                    ({% trans "Count of chars. Limited on some channels." %})
+                                    <a href="#"><i class="fa fa-question-circle"></i> help</a></small>
+                            </div>
+                        </div>
+
+                        <!-- Begin/End datetime -->
+                        {# TODO: verify the datetime timezone #}
+                        <div class="form-group row">
+                            <div class="col-sm">
+                                <label for="id_camp_begin" class="col-form-label">{% trans "Begin at" %}:</label>
+                                <input id="id_camp_begin" name="camp_begin" type="datetime-local"
+                                       value="{{ camp.begin|date:'Y-m-d\TH:i:s' }}" {% if ro %}readonly{% endif %}
+                                       class="form-control {% if small %}form-control-sm{% endif %}">
+                            </div>
+                            <div class="col-sm">
+                                <label for="id_camp_end" class="col-form-label">{% trans "End by" %}:</label>
+                                <input id="id_camp_end" name="camp_end" type="datetime-local"
+                                       value="{{ camp.end|date:'Y-m-d\TH:i:s' }}" {% if ro %}readonly{% endif %}
+                                       class="form-control {% if small %}form-control-sm{% endif %}">
+                            </div>
+                        </div>
+
+                        <!-- medias -->
+                        <div class="form-group">
+                            <label for="" class="col-form-label">Selected medias:</label>
+
+                            <div id="id_camp_selected_medias" class="input-group">
+                                {% for media in camp.medias.all %}
+                                    {% include 'weinsta/includes/media-card.html' with sel=True media=media mediatypes=mediatypes sel_medias=camp.medias.all %}
+                                {% endfor %}
+                            </div>
+                            <small class="form-text text-muted"> ({% trans "Weibo: MUST 1 media. Twitter: Max 9 medias." %})
+                            <a href="#"><i class="fa fa-question-circle"></i> help</a></small>
+                            {% if not ro %}
+                            {% include 'weinsta/includes/media-selection.html' with target_box="#id_camp_selected_medias" sel_medias=camp.medias.all %}
+                            {% endif %}
+                        </div>
+
+                        {% if not ro %}
+                        <div class="{% if small %}btn-group-sm{% else %}btn-group{% endif %}" role="group" aria-label="Form">
+{#                            <button id="id_btn_del" class="btn btn-outline-primary" type="submit"#}
+{#                                    onclick="$('{{ target_form }}').attr('action','{% url 'campaign' id=camp.id action='del' %}').attr('onsubmit', 'return confirm(\'{% trans "Sure to delete" %} {{ camp }}? \');');">#}
+{#                                <i class="fa fa-remove text-danger"></i> {% trans "Delete" %}</button>#}
+                            <button type="reset" class="btn btn-outline-primary"><i
+                                    class="fa fa-undo"></i> {% trans "Reset Form" %}</button>
+                            {% if camp.status < campaignstatus.READY %}
+                                <button onclick="$('{{ target_form }}').attr('action','{% url 'campaign' id=camp.id action='update' %}');"
+                                        type="submit" class="btn btn-outline-primary"><i
+                                        class="fa fa-save"></i> {% trans "Save" %}</button>
+                            {% else %}
+                                <button class="btn btn-outline-primary" disabled>{% trans "Can not save if READY or STARTED." %}</button>
+                            {% endif %}
+                        </div>
+                        {% endif %}
+
+                    </div>
+
+                </div>
+
+
+                <script language="JavaScript">
+
+                    $(document).ready(function(){
+                        var id_camp_txt_cnt = $("#id_camp_txt_cnt");
+                        $("#id_camp_text").keydown(function(e){
+                            id_camp_txt_cnt.text($(this).val().length);
+                        });
+                    });
+                </script>
+            {% endwith %}{% endif %}
+            <!-- Campaign editor form END -->

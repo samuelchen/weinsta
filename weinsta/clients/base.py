@@ -17,6 +17,10 @@ class SocialClientException(Exception):
     pass
 
 
+class SocialTokenException(SocialClientException):
+    pass
+
+
 class SocialClient(object, metaclass=abc.ABCMeta):
 
     __set = set()

@@ -59,16 +59,18 @@ urlpatterns = [
         name=views.CampaignView.view_name),
     url(r'^campaign/(?P<id>[0-9]+)/$', views.CampaignView.as_view(template_name=t('campaign.html')),
         name=views.CampaignView.view_name),
-    url(r'^campaign/(?P<id>[0-9]+)/(?P<action>(update|del|ready|start|done|renew))/$', views.CampaignView.as_view(
+    url(r'^campaign/(?P<id>[0-9]+)/(?P<action>(update|del|ready|start|done|renew|detail|track))/$', views.CampaignView.as_view(
         template_name=t('campaign.html')), name=views.CampaignView.view_name),
     url(r'^campaign/(?P<action>new)/$', views.CampaignView.as_view(template_name=t('campaign.html')),
         name=views.CampaignView.view_name),
+    url(r'^campaign/(?P<id>[0-9]+)/(?P<action>(battle))/(?P<battle_id>[0-9]+)/$', views.CampaignView.as_view(
+        template_name=t('campaign.html')), name=views.CampaignView.view_name),
 
     # battle & activity views
-    url(r'^campaign/(?P<id>[0-9]+)/(?P<action>(battle|track))/$', views.BattleView.as_view(
-        template_name=t('battle.html')), name=views.BattleView.view_name),
-    url(r'^campaign/(?P<id>[0-9]+)/(?P<action>(battle|track))/(?P<battle_id>[0-9]+)/$', views.BattleView.as_view(
-        template_name=t('battle.html')), name=views.BattleView.view_name),
+    # url(r'^campaign/(?P<id>[0-9]+)/(?P<action>(battle|track))/$', views.BattleView.as_view(
+    #     template_name=t('battle.html')), name=views.BattleView.view_name),
+    # url(r'^campaign/(?P<id>[0-9]+)/(?P<action>(battle|track))/(?P<battle_id>[0-9]+)/$', views.BattleView.as_view(
+    #     template_name=t('battle.html')), name=views.BattleView.view_name),
     # url(r'^campaign/(?P<id>[0-9]+)/(?P<action>(activities|track))/$', views.ActivityView.as_view(
     #     template_name=t('activity.html')), name=views.ActivityView.view_name),
 
