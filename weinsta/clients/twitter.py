@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 # coding: utf-8
 import os
+from urllib.parse import urlparse
 from django.db import IntegrityError
 from django.urls import reverse
 from django.conf import settings
@@ -11,8 +12,8 @@ from email.utils import parsedate_to_datetime
 from allauth.socialaccount.providers import registry
 from allauth.socialaccount.models import SocialAccount, SocialToken, SocialApp
 from requests_oauthlib import OAuth1
-from .base import SocialClient
-from ..models import SocialProviders, Media, MediaInstance, MediaQuality, MediaType
+from .base import SocialClient, SocialTokenExpiredException, SocialClientException
+from ..models import SocialProviders, Media, MediaInstance, MediaQuality, MediaType, ActivityType
 import simplejson as json
 import logging
 
@@ -64,6 +65,10 @@ class TwitterClient(SocialClient):
                 acc = SocialAccount.objects.get(provider=provider.id, user=user)
                 token = SocialToken.objects.get(app=app, account=acc)
 
+                # refresh token
+                if token.expires_at and timezone.now() > token.expires_at:
+                    raise SocialTokenExpiredException(provider_id)
+
                 token = {
                     'consumer_key': app.client_id,
                     'consumer_secret': app.secret,
@@ -92,7 +97,86 @@ class TwitterClient(SocialClient):
             print(token)
         return token
 
+    def get_activity_data(self, rid):
+        r = self.get_status(rid, trim_user=True, include_entities=False, include_ext_alt_text=False)
+        print(r)
+        if 'error' in r:
+            log.error(r)
+            raise SocialClientException(r)
+
+        # names map to models.ActivityClasses keys
+        data = {
+            ActivityType.LIKE: {
+                'count': int(r['favorite_count']),
+                'entries': [],
+            },
+            ActivityType.REPOST: {
+                'count': int(r['retweet_count']),
+                'entries': [],
+            },
+            ActivityType.COMMENT: {
+                'count': int(r['comments_count']),
+                'entries': [],
+            }
+        }
+
+        return data
+
+    def get_rid_from_url(self, url):
+
+        r = urlparse(url)
+        rid = r.path.split('/')[-1]
+        return rid
+
+    def post_status(self, text, img_field=None):
+
+        media_ids = []
+        if img_field is not None:
+            endpoint = 'https://upload.twitter.com/1.1/media/upload.json'
+
+            files = {'media': open(img_field.path, 'rb')}
+            result = self.invoke(endpoint=endpoint, method='post', files=files)
+            media_id = result['media_id']
+            media_ids.append(media_id)
+            media_size = result['size']
+
+        endpoint1 = 'statuses/update.json'
+        payload = {
+            'status': text,
+            'media_ids': media_ids
+        }
+        r = self.invoke(endpoint1, method='post', data=payload)
+        return r
+
     # ------- overrides end
+
+    def get_status(self, rid, **kwargs):
+        """
+        ref: https://developer.twitter.com/en/docs/tweets/post-and-engage/api-reference/get-statuses-show-id
+        :param rid: remote id of status
+        :param kwargs: additional parameters
+        :return: JSON string of status
+        """
+        endpoint = 'statuses/show.json'
+        payload = {
+            'id': rid,
+        }.update(kwargs)
+        r = self.invoke(endpoint, method='get', params=payload)
+        return r
+
+    # def get_statuses(self, rids, **kwargs):
+    #     """
+    #     ref: https://developer.twitter.com/en/docs/tweets/post-and-engage/api-reference/get-statuses-show-id
+    #     :param rid: comma separated remote ids of statuses
+    #     :param kwargs: additional parameters
+    #     :return: JSON string of status
+    #     """
+    #     endpoint = 'statuses/lookup.json'
+    #     payload = {
+    #         'id': rids,
+    #     }.update(kwargs)
+    #     r = self.invoke(endpoint, method='get', params=payload)
+    #     return r
 
     def fetch_favorites(self, callback=None):
         endpoint = 'favorites/list.json'
@@ -246,30 +330,10 @@ class TwitterClient(SocialClient):
 
         return m
 
-    def post_status(self, text, img_field=None):
-
-        media_ids = []
-        if img_field is not None:
-            endpoint = 'https://upload.twitter.com/1.1/media/upload.json'
-
-            files = {'media': open(img_field.path, 'rb')}
-            result = self.invoke(endpoint=endpoint, method='post', files=files)
-            media_id = result['media_id']
-            media_ids.append(media_id)
-            media_size = result['size']
-
-        endpoint1 = 'statuses/update.json'
-        payload = {
-            'status': text,
-            'media_ids': media_ids
-        }
-        r = self.invoke(endpoint1, method='post', data=payload)
-        return r
-
-    def get_code_from_link(self, link):
-        code = link.split('/')[-1]
-
-        return code
+    # def get_code_from_link(self, link):
+    #     code = link.split('/')[-1]
+    #
+    #     return code
 
     def get_quality(self, bitrate):
         if bitrate < 832000:

@@ -17,7 +17,7 @@ class SocialClientException(Exception):
     pass
 
 
-class SocialTokenException(SocialClientException):
+class SocialTokenExpiredException(SocialClientException):
     pass
 
 
@@ -82,11 +82,11 @@ class SocialClient(object, metaclass=abc.ABCMeta):
         """
         raise NotImplementedError
 
-    @abc.abstractmethod
-    def get_status(self, rid):
-        """
-        """
-        raise NotImplementedError
+    # @abc.abstractmethod
+    # def get_status(self, rid):
+    #     """
+    #     """
+    #     raise NotImplementedError
 
     @abc.abstractmethod
     def post_status(self, text, medias=[]):
@@ -103,10 +103,46 @@ class SocialClient(object, metaclass=abc.ABCMeta):
     def get_activity_data(self, rid):
         """
         Get status data for activities such as reply, like or repost.
+
+        e.g.
+        data = {
+            ActivityType.LIKE: {
+                'count': int(r['attitudes_count']),
+                'entries': [],
+            },
+            ActivityType.REPOST: {
+                'count': int(r['reposts_count']),
+                'entries': [],
+            },
+            ActivityType.COMMENT: {
+                'count': int(r['comments_count']),
+                'entries': [],
+            }
+        }
+
         :param rid: remote status id in str
         :return dict of activity data.
         """
         raise NotImplementedError
+
+    @abc.abstractmethod
+    def get_rid_from_url(self, url):
+        """
+        Get status remote id from given url.
+        :param url: url of the status
+        :return remote id in string
+        """
+        raise NotImplementedError
+
+    # @abc.abstractmethod
+    # def get_url_from_rid(self, rid):
+    #     """
+    #     Get status remote id from given url.
+    #     :param rid: remote id of the status
+    #     :return url
+    #     """
+    #     raise NotImplementedError
+
 
     # ----- class method
 

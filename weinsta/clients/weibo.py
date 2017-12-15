@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # coding: utf-8
 import os
-from urllib.parse import quote
+from urllib.parse import quote, urlparse
 from django.db import IntegrityError
 from django.shortcuts import redirect
 from django.urls import reverse
@@ -14,7 +14,7 @@ from allauth.socialaccount.providers import registry
 from allauth.socialaccount.models import SocialAccount, SocialToken, SocialApp
 import requests
 from requests_oauthlib import OAuth1
-from .base import SocialClient, SocialClientException, SocialTokenException
+from .base import SocialClient, SocialClientException, SocialTokenExpiredException
 from ..models import SocialProviders, Media, MediaInstance, MediaQuality, MediaType, ActivityType
 import simplejson as json
 import logging
@@ -67,12 +67,12 @@ class WeiboClient(SocialClient):
 
                 # refresh token
                 # weibo does not provide refresh_token. connect again or raise exception.
-                if timezone.now() > token.expires_at:
+                if token.expires_at and timezone.now() > token.expires_at:
                     # url = '/accounts/weibo/login/?process=connect'
                     # if request:
                     #     pass
                     # else:
-                    raise SocialTokenException('Weibo token expired.')
+                    raise SocialTokenExpiredException(provider_id)
 
                 token = token.token
 
@@ -130,11 +130,57 @@ class WeiboClient(SocialClient):
         #                      update_if_exists=True, cache_pic_to_local=True)
 
         return data
+    #
+    # def get_my_data(self):
+    #     pass
 
-    def get_my_data(self):
-        pass
+    def get_rid_from_url(self, url):
+        d = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
 
-    # ------- overrides end
+        def __from62radix(code):
+            i = 0
+            r = 0
+            for c in code:
+                n = len(code) - i - 1
+                i += 1
+                r += d.index(c) * pow(62, n)
+            return r
+
+        def __code2mid(code):
+            sb = []
+            j = len(code)
+            while j > 0:
+                i = j - 4 if j > 4 else 0
+                c4 = code[i:j]
+                sb.insert(0, '%07d' % __from62radix(c4))
+                j -= 4
+            return ''.join(sb)
+
+        r = urlparse(url)
+        code = r.path.split('/')[2]
+        rc = __code2mid(code).lstrip('0')
+        return rc
+
+    # def get_url_from_rid(self, rid):
+    #     d = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
+    #
+    #     def __to62radix(self, i):
+    #         l = []
+    #         while i != 0:
+    #             i, a = divmod(i, 62)
+    #             l.insert(0, d[a])
+    #         return "".join(l)
+    #
+    #     def __mid2code(wbid):
+    #         a = wbid[-7:]
+    #         a1 = __to62radix(int(a))
+    #         b = wbid[-14:-7]
+    #         b1 = __to62radix(int(b))
+    #         c = wbid[:-14]
+    #         c1 = __to62radix(int(c))
+    #         return "%s%s%s" % (c1, b1, a1)
+    #
+    #     return ''
 
     def post_status(self, text, medias=[]):
         print(text, medias)
@@ -174,6 +220,8 @@ class WeiboClient(SocialClient):
         else:
             rc = r
         return rc
+
+    # ------- overrides end
 
     def get_status(self, rid):
         endpoint = 'statuses/show.json'

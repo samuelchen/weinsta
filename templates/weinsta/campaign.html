@@ -75,13 +75,15 @@
             {% include 'weinsta/includes/campaign-battles.html' with campaign=thecampaign battle=thebattle activitytypes=activitytypes small=True %}
             {% include 'weinsta/includes/battle-chart.html' with battle=thebattle activitytypes=activitytypes chart_data=chart_data %}
 
+            {% if thecampaign %}
             <div class="form-inline form-control-sm">
-                <label for="id_add_battle_url" class="form-control-label mr-2">Channel url for track: </label>
-                <input id="id_add_battle_url" type="text" class="form-control col-6">
-                <button onclick="$('{{ target_form }}').attr('action','{% url 'campaign' id=battle.id action='add' %}');"
+                <label for="id_add_battle_url" class="form-control-label mr-2">{% trans "Status url you want to track in campaign." %} : </label>
+                <input id="id_add_battle_url" name="channel_url" type="url" class="form-control col-6">
+                <button onclick="$('#id_form_action').attr('action','{% url 'campaign' id=thecampaign.id action='add' %}');"
                     type="submit" class="btn btn-outline-primary"><i class="fa fa-eye"></i> {% trans "Add" %}</button>
 
             </div>
+            {% endif %}
         {% endif %}
 
         </form>

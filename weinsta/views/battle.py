@@ -15,7 +15,7 @@ from .base import BaseViewMixin
 from .. import settings
 from ..clients import CampaignGeneral
 from ..models import Campaign, SocialProviders, Media, MediaType, CampaignStatus, ActivityType, Battle, Activity
-from weinsta.clients.base import SocialTokenException
+from weinsta.clients.base import SocialTokenExpiredException
 
 log = logging.getLogger(__name__)
 
@@ -89,7 +89,7 @@ class BattleView(TemplateView, BaseViewMixin):
             except Exception as err:
                 log.exception(err)
                 s = str(err)
-                if isinstance(err, SocialTokenException):
+                if isinstance(err, SocialTokenExpiredException):
                     s += _(' Please <a href="%s">re-connect</a> your social account.') % reverse('socialaccount_connections')
                 error(request, s)
         # if camp:

@@ -14,17 +14,20 @@ from django.utils import timezone
 from django.views import View
 from django.contrib.messages import error, success, warning
 from dateutil import parser as dtparser
+from urllib.request import urlparse
 
 from ... import settings
-from ...clients import CampaignGeneral
-from ...models import Campaign, Media, CampaignStatus
+from ...clients import CampaignGeneral, SocialClientManager
+from ...models import Campaign, Media, CampaignStatus, SocialProviders, Battle
 
 import logging
-from weinsta.clients.base import SocialTokenException
+from weinsta.clients.base import SocialTokenExpiredException
+from weinsta.clients.campaign import BattleObserver, BattleUnsupportedUrlException, BattleChannelExistedException
 
 log = logging.getLogger(__name__)
 
 
+# TODO: move all campaign methods to CampaignGeneral (client/campaign.py)
 class CampaignFormViewMixin(View):
 
     def handle_campaign_action(self, action, campaign=None):
@@ -49,6 +52,8 @@ class CampaignFormViewMixin(View):
             self.update_campaign(camp)
         elif action == 'track' and camp:
             self.track_campaign(camp)
+        elif action == 'add' and camp:
+            self.add_battle_to_campaign(camp)
         else:
             log.error('Unknown action "%s" to campaign %s .' % (action, campaign))
 
@@ -115,7 +120,7 @@ class CampaignFormViewMixin(View):
                 camp.save()
                 success(request, _('Campaign "%s" is started.') % camp)
 
-            print(results)
+            log.debug(results)
             for provider, r in results.items():
                 if 'error' in r:
                     error(request, _('Campaign "%s" fail to start on "%s". Error(%s): %s') % (
@@ -200,9 +205,40 @@ class CampaignFormViewMixin(View):
         try:
             general = CampaignGeneral(campaign=camp, request=request)
             general.track()
+        except SocialTokenExpiredException as err:
+            provider = str(err)
+            error(request, _('Your %s token expired. Please <a href="%s">re-connect</a> your social account.') %
+                  (SocialProviders.get_text(provider), reverse('socialaccount_connections')))
         except Exception as err:
             log.exception(err)
-            s = str(err)
-            if isinstance(err, SocialTokenException):
-                s += _(' Please <a href="%s">re-connect</a> your social account.') % reverse('socialaccount_connections')
-            error(request, s)
+            error(request, str(err))
+
+    def add_battle_to_campaign(self, camp):
+
+        assert camp is not None
+        request = self.request
+
+        if camp.status > CampaignStatus.IN_PROGRESS:
+            error(request, _('Can not add channel to finished campaign.'))
+            return
+
+        req = request.POST
+        url = req['channel_url'] if 'channel_url' in req else ''
+
+        general = CampaignGeneral(campaign=camp, request=request)
+
+        try:
+            battle = general.add_battle_from_url(url)
+            log.debug('Battle %s added.' % battle)
+        except BattleUnsupportedUrlException as err:
+            url = str(err)
+            error(request, _('Url "%s" is not from a supported social platform.') % url)
+            return
+        except BattleChannelExistedException as err:
+            provider = str(err)
+            error(request, _('You have a channel on %s already.') % SocialProviders.get_text(provider))
+            pass
+        except SocialTokenExpiredException as err:
+            provider = str(err)
+            error(request, _('Your %s token expired. Please <a href="%s">re-connect</a> your social account.') %
+                  (SocialProviders.get_text(provider), reverse('socialaccount_connections')))

@@ -71,13 +71,16 @@ class CampaignView(TemplateView, BaseViewMixin, CampaignFormViewMixin):
             except Campaign.DoesNotExist as err:
                 return HttpResponseNotFound(_('Campaign %s is not found in your list.') % id)
 
-        self.handle_campaign_action(action=action, campaign=camp)
+        camp = self.handle_campaign_action(action=action, campaign=camp)
 
         if camp:
             context['thecampaign'] = camp
+            # id = camp.id
 
         if action in ['del', ]:
             return HttpResponseRedirect(reverse(CampaignView.view_name))
+        # elif action in ['new', ]:
+        #     return HttpResponseRedirect(reverse(CampaignView.view_name, kwargs={'id': id}))
 
         return self.render_to_response(context)
 

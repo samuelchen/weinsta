@@ -27,12 +27,12 @@ class SocialProviders(object):
     TWITTER = twitter.provider.provider_classes[0].id
     WEIBO = weibo.provider.provider_classes[0].id
 
-    # metas: 0 - code, 1 - text, 2 - icon, 3 - can publish
+    # metas: 0 - code, 1 - text, 2 - icon, 3 - can publish, 4 - domains
     __metas = {
-        UNKNOWN: (UNKNOWN, '', 'fa fa-question-question-circle ', False),
-        INSTAGRAM: (INSTAGRAM, _('instagram'), 'fa fa-instagram', False),
-        TWITTER: (TWITTER, _('twitter'), 'fa fa-twitter', True),
-        WEIBO: (WEIBO, _('weibo'), 'fa fa-weibo', True),
+        UNKNOWN: (UNKNOWN, '', 'fa fa-question-question-circle ', False, ()),
+        INSTAGRAM: (INSTAGRAM, _('instagram'), 'fa fa-instagram', False, ('instagram.com', )),
+        TWITTER: (TWITTER, _('twitter'), 'fa fa-twitter', True, ('twitter.com', )),
+        WEIBO: (WEIBO, _('weibo'), 'fa fa-weibo', True, ('weibo.com', )),
     }
 
     Choices = sorted(tuple(map(lambda x: (x[0], x[1]), __metas.values())), key=itemgetter(0))

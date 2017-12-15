@@ -1,9 +1,9 @@
 #!/usr/bin/env python
 # coding: utf-8
+from urllib.parse import urlparse
 
-from django.utils import timezone
 from .base import CampaignMixin
-from ..models import Campaign, Battle, Activity, ActivityType
+from ..models import Campaign, Battle, Activity, ActivityType, SocialProviders, CampaignStatus
 from .utils import SocialClientManager
 import logging
 
@@ -18,13 +18,21 @@ class BattleException(Exception):
     pass
 
 
+class BattleUnsupportedUrlException(BattleException):
+    pass
+
+
+class BattleChannelExistedException(BattleException):
+    pass
+
+
 class CampaignGeneral(CampaignMixin):
 
     def __init__(self, campaign, request=None):
         assert isinstance(campaign, Campaign)
         self._camp = campaign
         self._request = request
-        self._clients = SocialClientManager.get_clients(self._camp.get_providers(), self._camp.user)
+        # self._clients = SocialClientManager.get_clients(self._camp.get_providers(), self._camp.user)
         # log.debug('clients: %s' % self._clients)
 
     @property
@@ -37,7 +45,8 @@ class CampaignGeneral(CampaignMixin):
         started = False
         rc = {}
         camp = self.campaign
-        for provider, cli in self._clients.items():
+        clients = SocialClientManager.get_clients(self._camp.get_providers(), self._camp.user, request=self._request)
+        for provider, cli in clients.items():
             cmder = BattleCommander.get(campaign=camp, provider=provider)
             r = cmder.start()
             if "error" not in r:
@@ -55,6 +64,48 @@ class CampaignGeneral(CampaignMixin):
             cmder.track()
 
     # ------- Campaign overrides Ends----------
+
+    def add_battle_from_url(self, url):
+        camp = self._camp
+
+        r = urlparse(url)
+        netloc = r.netloc.lower()
+        log.debug('adding channel url from %s' % netloc)
+
+        provider = SocialProviders.UNKNOWN
+        for t, m in SocialProviders.Metas.items():
+            if netloc in m[4]:
+                provider = t
+                break
+
+        if provider == SocialProviders.UNKNOWN:
+            raise BattleUnsupportedUrlException(url)
+
+        cli = SocialClientManager.get_client(provider=provider, user=self._camp.user, request=self._request)
+        rid = cli.get_rid_from_url(url)
+
+        battle, created = Battle.objects.get_or_create(campaign=camp, provider=provider)
+        if created:
+            if camp.providers:
+                providers = camp.providers.split(',')
+                providers.append(provider)
+                camp.providers = ','.join(providers)
+            else:
+                camp.providers = provider
+            camp.save()
+
+            battle.rid = rid
+            if camp.status == CampaignStatus.IN_PROGRESS:
+                battle.started = True
+                BattleObserver.init(battle)
+            battle.save()
+        else:
+            raise BattleChannelExistedException(provider)
+
+        return battle
+
+    def remove_battle(self, battle):
+        pass
 
 
 class BattleCommander(object):
@@ -75,14 +126,18 @@ class BattleCommander(object):
 
         cli = self._client
         camp = battle.campaign
-        r = cli.post_status(camp.text, camp.medias.all())
-        if 'error' in r:
-            log.error('Fail to start campaign "%s" on %s. Error: %s' % (camp, cli.provider, r['error']))
-            battle.started = False
+        if battle.rid is None:
+            r = cli.post_status(camp.text, camp.medias.all())
+            if 'error' in r:
+                log.error('Fail to start campaign "%s" on %s. Error: %s' % (camp, cli.provider, r['error']))
+                battle.started = False
+            else:
+                log.debug('Campaign "%s" started on %s.' % (camp, cli.provider))
+                battle.started = True
+                battle.rid = r['id']    # TODO: need to add a social object -> model converter (abstracted)
         else:
-            log.debug('Campaign "%s" started on %s.' % (camp, cli.provider))
             battle.started = True
-            battle.rid = r['id']    # TODO: need to add a social object -> model converter (abstracted)
+            r = {'succeed': 'The battle was added.'}
 
         battle.save()
         BattleObserver.init(battle)
