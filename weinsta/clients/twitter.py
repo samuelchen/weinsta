@@ -13,7 +13,7 @@ from allauth.socialaccount.providers import registry
 from allauth.socialaccount.models import SocialAccount, SocialToken, SocialApp
 from requests_oauthlib import OAuth1
 from .base import SocialClient, SocialTokenExpiredException, SocialClientException
-from ..models import SocialProviders, Media, MediaInstance, MediaQuality, MediaType, ActivityType
+from ..models import SocialProviders, Media, MediaInstance, MediaQuality, MediaType, ActivityType, SocialUser
 import simplejson as json
 import logging
 
@@ -115,7 +115,7 @@ class TwitterClient(SocialClient):
                 'entries': [],
             },
             ActivityType.COMMENT: {
-                'count': int(r['comments_count']),
+                'count': 0,     # int(r['comments_count']),
                 'entries': [],
             }
         }
@@ -128,24 +128,51 @@ class TwitterClient(SocialClient):
         rid = r.path.split('/')[-1]
         return rid
 
-    def post_status(self, text, img_field=None):
+    def get_url_from_rid(self, rid, user):
+
+        acc = SocialAccount.objects.get(provider=SocialProviders.TWITTER, user=user)
+        assert acc is not None
+        su = SocialUser.objects.get(rid=acc.uid)
+        assert su is not None
+        social_name = su.username
+        r = 'https://twitter.com/%s/status/%s' % (social_name, rid)
+        return r
+
+    # def post_status(self, text, img_field=None):
+    def post_status(self, text, medias=[]):
 
         media_ids = []
-        if img_field is not None:
-            endpoint = 'https://upload.twitter.com/1.1/media/upload.json'
+        files = None
+        endpoint_media = 'https://upload.twitter.com/1.1/media/upload.json'
 
-            files = {'media': open(img_field.path, 'rb')}
-            result = self.invoke(endpoint=endpoint, method='post', files=files)
-            media_id = result['media_id']
-            media_ids.append(media_id)
-            media_size = result['size']
+        if medias:
+            for m in medias:
+                mi = m.get_media_instance(quality=MediaQuality.HIGH)
+                if mi is None:
+                    mi = m.get_pic_instance(quality=MediaQuality.HIGH)
+                if mi is not None:
+                    mii = mi.instance
+                    files = {'media': open(mii.path, 'rb')}
 
-        endpoint1 = 'statuses/update.json'
+                    # files = {'media': open(img_field.path, 'rb')}
+                    result = self.invoke(endpoint=endpoint_media, method='post', files=files)
+                    media_id = result['media_id']
+                    media_ids.append(str(media_id))
+                    media_size = result['size']
+
+        endpoint = 'statuses/update.json'
         payload = {
             'status': text,
-            'media_ids': media_ids
+            'media_ids': ','.join(media_ids),
+            # 'trim_user': True,
         }
-        r = self.invoke(endpoint1, method='post', data=payload)
+        r = self.invoke(endpoint, method='post', data=payload)
+
+        if 'error' not in r:
+            rid = r['id']
+            screen_name = r['user']['screen_name']
+            r['url'] = 'https://twitter.com/%s/status/%s' % (screen_name, rid)
+        print(r)
         return r
 
     # ------- overrides end
@@ -160,7 +187,8 @@ class TwitterClient(SocialClient):
         endpoint = 'statuses/show.json'
         payload = {
             'id': rid,
-        }.update(kwargs)
+        }
+        payload.update(kwargs)
         r = self.invoke(endpoint, method='get', params=payload)
         return r
 

@@ -24,7 +24,10 @@
                 {% for btl in battles.all %}
                 <tr id="id_row_{{ btl.id }}" {% if btl.id == battle.id %}class="table-warning"{% endif %}>
                     <th scope="row" class="d-md-table-cell d-none">{{ btl.id }}</th>
-                    <td><a href="{% url 'campaign' id=camp.id action='battle' battle_id=btl.id %}"><i class="{% call_with_func_and_args providers 'get_icon' btl.provider %}"></i> {{ btl.provider }}</a></td>
+                    <td>
+                        <a href="{% url 'campaign' id=camp.id action='battle' battle_id=btl.id %}"><i class="{% call_with_func_and_args providers 'get_icon' btl.provider %}"></i> {{ btl.provider }}</a>
+                        &nbsp;<a href="{{ btl.link }}" target="_blank"><i class="fa fa-external-link"></i></a>
+                    </td>
                     <td>{{ btl.started }}</td>
                     <td>{{ btl.finished }}</td>
                     {% for activity in btl.latest_activities %}

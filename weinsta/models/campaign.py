@@ -121,6 +121,7 @@ class Battle(models.Model):
     campaign = models.ForeignKey(Campaign, related_name='battles')
     provider = models.CharField(max_length=50, choices=SocialProviders.Choices)
     rid = models.CharField(max_length=100, help_text='remote id of posted status for this battle')
+    link = models.TextField(help_text='link for the status')
 
     started = models.BooleanField(default=False)
     finished = models.BooleanField(default=False)

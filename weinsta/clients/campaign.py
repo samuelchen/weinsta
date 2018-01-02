@@ -95,6 +95,7 @@ class CampaignGeneral(CampaignMixin):
             camp.save()
 
             battle.rid = rid
+            battle.link = url
             if camp.status == CampaignStatus.IN_PROGRESS:
                 battle.started = True
                 BattleObserver.init(battle)
@@ -126,7 +127,7 @@ class BattleCommander(object):
 
         cli = self._client
         camp = battle.campaign
-        if battle.rid is None:
+        if not battle.rid:
             r = cli.post_status(camp.text, camp.medias.all())
             if 'error' in r:
                 log.error('Fail to start campaign "%s" on %s. Error: %s' % (camp, cli.provider, r['error']))
@@ -135,6 +136,7 @@ class BattleCommander(object):
                 log.debug('Campaign "%s" started on %s.' % (camp, cli.provider))
                 battle.started = True
                 battle.rid = r['id']    # TODO: need to add a social object -> model converter (abstracted)
+                battle.link = r['url']
         else:
             battle.started = True
             r = {'succeed': 'The battle was added.'}

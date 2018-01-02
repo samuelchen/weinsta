@@ -83,6 +83,15 @@ class InstagramClient(SocialClient):
             print(token)
         return token
 
+    def get_activity_data(self, rid):
+        raise NotImplementedError
+
+    def get_rid_from_url(self, url):
+        raise NotImplementedError
+
+    def post_status(self, text, medias=[]):
+        raise NotImplementedError
+
     # ------ overrides end
 
     def fetch_my_timeline(self, callback=None):
