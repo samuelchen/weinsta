@@ -12,8 +12,8 @@ class BaseViewMixin(ContextMixin):
 
         context['website'] = {
             "domain": "bdgru.com",
-            "name": "BDGRU",
-            "fullname": _('Business Development Guru')
+            "name": _("BDGRU"),
+            "fullname": _('Business Development GuRU')
         }
 
         return context
