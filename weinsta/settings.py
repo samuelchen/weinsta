@@ -46,6 +46,7 @@ INSTALLED_APPS = [
     'allauth.socialaccount.providers.instagram',
     'allauth.socialaccount.providers.weibo',
     'allauth.socialaccount.providers.twitter',
+    'allauth.socialaccount.providers.facebook',
 
     'weinsta',
 
@@ -161,6 +162,30 @@ STATICFILES_DIRS = [
 SOCIALACCOUNT_PROVIDERS = {
     'instagram': {
         'SCOPE': ['basic', 'public_content', 'follower_list', 'comments', 'relationships', 'likes']
+    },
+
+    'facebook': {
+        'METHOD': 'oauth2',
+        'SCOPE': ['email', 'public_profile', 'user_friends'],
+        'AUTH_PARAMS': {'auth_type': 'reauthenticate'},
+        'INIT_PARAMS': {'cookie': True},
+        'FIELDS': [
+            'id',
+            'email',
+            'name',
+            'first_name',
+            'last_name',
+            'verified',
+            'locale',
+            'timezone',
+            'link',
+            'gender',
+            'updated_time',
+        ],
+        'EXCHANGE_TOKEN': True,
+        # 'LOCALE_FUNC': 'path.to.callable',
+        'VERIFIED_EMAIL': False,
+        'VERSION': 'v2.11',
     }
 }
 

@@ -13,7 +13,7 @@ from django.utils.translation import pgettext_lazy, ugettext_noop, override, uge
 import simplejson as json
 import logging
 import hashlib
-from allauth.socialaccount.providers import instagram, twitter, weibo
+from allauth.socialaccount.providers import instagram, twitter, weibo, facebook
 
 log = logging.getLogger(__name__)
 # FS = FileSystemStorage(location=os.path.abspath(os.path.join(settings.MEDIA_ROOT, 'authors')))
@@ -26,6 +26,7 @@ class SocialProviders(object):
     INSTAGRAM = instagram.provider.provider_classes[0].id
     TWITTER = twitter.provider.provider_classes[0].id
     WEIBO = weibo.provider.provider_classes[0].id
+    FACEBOOK = facebook.provider.provider_classes[0].id
 
     # metas: 0 - code, 1 - text, 2 - icon, 3 - can publish, 4 - domains
     __metas = {
@@ -33,6 +34,7 @@ class SocialProviders(object):
         INSTAGRAM: (INSTAGRAM, _('instagram'), 'fa fa-instagram', False, ('instagram.com', )),
         TWITTER: (TWITTER, _('twitter'), 'fa fa-twitter', True, ('twitter.com', )),
         WEIBO: (WEIBO, _('weibo'), 'fa fa-weibo', True, ('weibo.com', )),
+        FACEBOOK: (FACEBOOK, _('facebook'), 'fa fa-facebook', True, ('facebook.com', )),
     }
 
     Choices = sorted(tuple(map(lambda x: (x[0], x[1]), __metas.values())), key=itemgetter(0))
