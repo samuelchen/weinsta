@@ -17,11 +17,6 @@ from .campaign import (
     Battle,
     Activity,
     ActivityType,
-    # CommentActivity,
-    # RePostActivity,
-    # LikeActivity,
-    # ActivityPerson,
-    # ActivityClasses,
 )
 from .admin import SocialUserAdmin
 

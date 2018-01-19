@@ -78,6 +78,9 @@ urlpatterns = [
     # RESTFul RPC views
     url(r'^api/medias/$', views.rest.MediasJsonView.as_view(), name='rest_medias'),
 
+    # dashboard
+    url(r'^dashboard/', include('bdgru.urls'), name='dashboard'),
+
 
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
 
