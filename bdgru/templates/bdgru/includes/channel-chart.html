@@ -1,0 +1,159 @@
+{% load i18n staticfiles customer_tags %}
+{# Campaign Battles table #}
+{# Vars:  campaign: (Campaign Model object. Current selected campaign) #}
+{#        chart_data: chart data dict. activity type ("like", "repost", "comment" ...) as key, each for an activity. #}
+{#                    sub-dict uses "lables" and "data" as key, values are "axis-y lables" and data.     #}
+{#        activitytypes (ActivityType model class) #}
+{#        providers (SocialProviders model class) #}
+{#        small (bool, optional. default False. Small size control and text.) #}
+
+        <!-- Battle Chart BEGIN -->
+        {% if campaign %}
+        <div class="row">
+            {% for battle in campaign.battles.all %}
+            <div class="col-sm-6 col-xs-12">
+                <h4 class="text-center">{% call_with_func_and_args providers 'get_text' battle.provider %}</h4>
+                <canvas id="chart_{{ battle.provider }}" ></canvas>
+            </div>
+            {% endfor %}
+        </div>
+
+{#        <script src="{% static 'weinsta/js/Chart.min.js' %}"></script>#}
+        <script language="JavaScript">
+
+            var options = [
+                {
+                    backgroundColor: "rgba(255, 255, 255, 0.1)",
+                    borderColor: "rgba(38, 185, 154, 0.7)",
+                    pointBorderColor: "rgba(38, 185, 154, 0.7)",
+                    pointBackgroundColor: "rgba(38, 185, 154, 0.7)",
+                    pointHoverBackgroundColor: "#fff",
+                    pointHoverBorderColor: "rgba(38, 185, 154,1)",
+                    pointBorderWidth: 1
+                },
+                {
+                    backgroundColor: "rgba(255, 255, 255, 0.1)",
+                    borderColor: "rgba(3, 88, 106, 0.70)",
+                    pointBorderColor: "rgba(3, 88, 106, 0.70)",
+                    pointBackgroundColor: "rgba(3, 88, 106, 0.70)",
+                    pointHoverBackgroundColor: "#fff",
+                    pointHoverBorderColor: "rgba(3, 88, 106,1)",
+                    pointBorderWidth: 1
+                },
+
+                {
+                    backgroundColor: "rgba(255, 255, 255, 0.1)",
+                    borderColor: "rgba(54, 162, 235, 0.70)",
+                    pointBorderColor: "rgba(54, 162, 235, 0.70)",
+                    pointBackgroundColor: "rgba(54, 162, 235, 0.70)",
+                    pointHoverBackgroundColor: "#fff",
+                    pointHoverBorderColor: "rgba(54, 162, 235, 1)",
+                    pointBorderWidth: 1
+                },
+
+                {
+                    backgroundColor: "rgba(255, 255, 255, 0.1)",
+                    borderColor: "rgba(255, 206, 86, 0.70)",
+                    pointBorderColor: "rgba(255, 206, 86, 0.70)",
+                    pointBackgroundColor: "rgba(255, 206, 86, 0.70)",
+                    pointHoverBackgroundColor: "#fff",
+                    pointHoverBorderColor: "rgba(255, 206, 86, 1)",
+                    pointBorderWidth: 1
+                },
+                {
+                    backgroundColor: "rgba(255, 255, 255, 0.1)",
+                    borderColor: "rgba(75, 192, 192, 0.70)",
+                    pointBorderColor: "rgba(75, 192, 192, 0.70)",
+                    pointBackgroundColor: "rgba(75, 192, 192, 0.70)",
+                    pointHoverBackgroundColor: "#fff",
+                    pointHoverBorderColor: "rgba(75, 192, 192, 1)",
+                    pointBorderWidth: 1
+                },
+                {
+                    backgroundColor: "rgba(255, 255, 255, 0.1)",
+                    borderColor: "rgba(255, 99, 132, 0.70)",
+                    pointBorderColor: "rgba(255, 99, 132, 0.70)",
+                    pointBackgroundColor: "rgba(255, 99, 132, 0.70)",
+                    pointHoverBackgroundColor: "#fff",
+                    pointHoverBorderColor: "rgba(255, 99, 132, 1)",
+                    pointBorderWidth: 1
+                },
+                {
+                    backgroundColor: "rgba(255, 255, 255, 0.1)",
+                    borderColor: "rgba(153, 102, 255, 0.70)",
+                    pointBorderColor: "rgba(153, 102, 255, 0.70)",
+                    pointBackgroundColor: "rgba(153, 102, 255, 0.70)",
+                    pointHoverBackgroundColor: "#fff",
+                    pointHoverBorderColor: "rgba(153, 102, 255, 1)",
+                    pointBorderWidth: 1
+                },
+                {
+                    backgroundColor: "rgba(255, 255, 255, 0.1)",
+                    borderColor: "rgba(255, 159, 64, 0.70)",
+                    pointBorderColor: "rgba(255, 159, 64, 0.70)",
+                    pointBackgroundColor: "rgba(255, 159, 64, 0.70)",
+                    pointHoverBackgroundColor: "#fff",
+                    pointHoverBorderColor: "rgba(255, 159, 64, 1)",
+                    pointBorderWidth: 1
+                },
+            ];
+
+            function draw_chart(canvas_id, labels, data) {
+                var ctx = document.getElementById(canvas_id).getContext('2d');
+                var ds = [
+                            {% for t, meta in activitytypes.Metas.items %}{
+                                label: "{% call_with_func_and_args activitytypes 'get_text' t %}",
+                                data: data["{{ t }}"]
+                            },{% endfor %}
+                        ];
+                for (var i=0; i<ds.length; i++) {
+                    for (var k in options[i]) {
+                        console.log(k);
+                        ds[i][k] = options[i][k];
+                    }
+                }
+                console.log(ds);
+                var chart = new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: labels,
+                        datasets: ds
+                    },
+                    options: {
+                        scales: {
+                            yAxes: [{
+                                ticks: {
+                                    beginAtZero: true
+                                }
+                            }]
+                        },
+                        legend: {
+                            position: "bottom",
+                            labels: {
+                                boxWidth: 10,
+                                fontColor: '#337ab7'
+                            }
+                        },
+{#                        title: {#}
+{#                            display: true,#}
+{#                            fontColor: '#337ab7',#}
+{#                            text: title#}
+{#                        }#}
+                    }
+                });
+            }
+
+            $(document).ready(function(){
+                var chart_data = {{ chart_data |safe|default_if_none:'' }};
+                {% for battle in campaign.battles.all %}
+                    draw_chart("chart_{{ battle.provider }}",
+{#                            "{% call_with_func_and_args providers 'get_text' battle.provider %}",#}
+                            chart_data["labels"],
+                            chart_data["{{ battle.provider }}"]);
+                {% endfor %}
+            });
+
+        </script>
+        {% endif %}
+
+        <!-- Battle Chart END -->

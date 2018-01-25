@@ -1,0 +1,142 @@
+{% extends "./base.html" %}
+
+{% load i18n %}
+{% load account socialaccount %}
+
+{% block title %}{% trans "Sign In" %}{% endblock %}
+
+{% block stylesheets %}
+  {{ block.super }}
+  <!-- Animate.css -->
+{#  <link href="/static/vendors/animate.css/animate.min.css" rel="stylesheet">#}
+{% endblock stylesheets %}
+
+{% block body_class %}login{% endblock body_class %}
+
+
+{% block body %}
+
+  {% get_providers as socialaccount_providers %}
+  <div>
+{#    <a class="hiddenanchor" id="signup"></a>#}
+{#    <a class="hiddenanchor" id="signin"></a>#}
+
+      {% include 'bdgru/includes/django-messages-inc.html' %}
+
+    <div class="login_wrapper">
+      <div class="animate form login_form">
+        <section class="login_content">
+          <form method="POST" action="{% url 'account_login' %}">
+              {% csrf_token %}
+
+            <h1>Login Form</h1>
+            <div>
+              <input id="id_login" name="login" type="text" class="form-control" placeholder="Email" required="" />
+            </div>
+            <div>
+              <input id="id_password" name="password" type="password" class="form-control" placeholder="Password" required="" />
+            </div>
+            <div class="checkbox">
+                <label><input id="id_remember" name="remember" type="checkbox" class="flat"/>Remember Me</label>
+            </div>
+            <div>
+              <button class="btn btn-default btn-sm submit" type="submit">Log in</button>
+              <a class="reset_pass" href="{% url 'account_reset_password' %}">{% trans "Lost your password?" %}</a>
+            </div>
+
+              {% if redirect_field_value %}
+              <input type="hidden" name="{{ redirect_field_name }}" value="{{ redirect_field_value }}" />
+              {% endif %}
+
+            <div class="clearfix"></div>
+
+            <div class="separator">
+
+                {% if socialaccount_providers %}
+                <p>{% blocktrans with site.name as site_name %}Please sign in with one
+                of your existing third party accounts. {% endblocktrans %}</p>
+
+                <div class="socialaccount_ballot">
+
+                  <ul class="socialaccount_providers list-inline">
+                    {% include "socialaccount/snippets/provider_list.html" with process="login" %}
+                  </ul>
+
+                  <div class="login-or">{% trans 'or' %}</div>
+
+                </div>
+
+                {% include "socialaccount/snippets/login_extra.html" %}
+
+                {% else %}
+                {#<p>{% blocktrans %}If you have not created an account yet, then please#}
+                {#<a href="{{ signup_url }}">sign up</a> first.{% endblocktrans %}</p>#}
+
+                {% endif %}
+
+
+              <p class="change_link">New to {{ site.name }}?
+{#                <a href="#signup" class="to_register"> Create Account </a>#}
+                <a href="{% url 'account_signup' %}" class="to_register"> Create Account </a>
+              </p>
+
+              <div class="clearfix"></div>
+              <br />
+
+              <div>
+                <h1><i class="fa fa-paw"></i> {{ site.name }}</h1>
+                <p>©2018 All Rights Reserved. {{ site.domain }}</p>
+              </div>
+            </div>
+          </form>
+        </section>
+      </div>
+
+{#      <div id="register" class="animate form registration_form">#}
+{#        <section class="login_content">#}
+{#          <form class="signup" id="signup_form" method="post" action="{% url 'account_signup' %}">#}
+{#              {% csrf_token %}#}
+{##}
+{#            <h1>Create Account</h1>#}
+{#            <div>#}
+{#              <input id="id_email" name="email" type="email" class="form-control" placeholder="Email" required="" />#}
+{#            </div>#}
+{#            <div>#}
+{#              <input id="id_username" name="username" type="text" class="form-control" placeholder="Username" required="" />#}
+{#            </div>#}
+{#            <div>#}
+{#              <input id="id_password1" name="password1" type="password" class="form-control" placeholder="Password" required="" />#}
+{#            </div>#}
+{#            <div>#}
+{#              <input id="id_password2" name="password2" type="password" class="form-control" placeholder="Password" required="" />#}
+{#            </div>#}
+{#            <div>#}
+{#              <button class="btn btn-default btn-sm submit" type="submit">{% trans "Sign Up" %} &raquo;</button>#}
+{#                  {% if redirect_field_value %}#}
+{#  <input type="hidden" name="{{ redirect_field_name }}" value="{{ redirect_field_value }}" />#}
+{#  {% endif %}#}
+{#            </div>#}
+{##}
+{#            <div class="clearfix"></div>#}
+{##}
+{#            <div class="separator">#}
+{#              <p class="change_link">Already a member ?#}
+{#                <a href="#signin" class="to_register"> Log in </a>#}
+{#              </p>#}
+{##}
+{#              <div class="clearfix"></div>#}
+{#              <br />#}
+{##}
+{#              <div>#}
+{#                <h1><i class="fa fa-paw"></i> Gentelella Alela!</h1>#}
+{#                <p>©2016 All Rights Reserved. Gentelella Alela! is a Bootstrap 3 template. Privacy and Terms</p>#}
+{#              </div>#}
+{#            </div>#}
+{#          </form>#}
+{#        </section>#}
+{#      </div>#}
+    </div>
+  </div>
+
+
+{% endblock %}

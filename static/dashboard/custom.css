@@ -1,0 +1,199 @@
+
+a.video {
+    float: left;
+    position: relative;
+}
+
+a.video::before {
+    width: 100%;
+    height: 100%;
+    position: absolute;
+    content: '';
+    background: url("../weinsta/img/play-btn.png") no-repeat;
+    background-position: 50% 50%;
+    background-size: 50%;
+}
+
+@media screen and (max-width: 480px) {
+    a.video::before {
+        background-size: 50%;
+    }
+}
+
+.footer {
+    position: relative;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    /*padding: 1rem;*/
+    /*background-color: #efefef;*/
+    text-align: center;
+}
+
+/* corner mark */
+.top-left {
+    font-weight: 600;
+    background-color: #F5F5F5;
+    font-size: 0.7em;
+    top: -1px;
+    left: -1px;
+    padding: 3px 7px;
+    position: absolute;
+    color: #9DA0A4;
+    border: 1px solid #DDD;
+    border-radius: 4px 0;
+}
+
+.top-left-t {
+    /*font-weight: 600;*/
+    background-color: transparent;
+    /*font-size: 0.7em;*/
+    top: -8px;
+    left: 12px;
+    /*padding: 1px 1px;*/
+    position: absolute;
+    /*color: #9DA0A4;*/
+    /*border: 1px solid #DDD;*/
+    /*border-radius: 4px 0;*/
+}
+
+.top-right {
+    font-weight: 600;
+    background-color: #F5F5F5;
+    font-size: 0.7em;
+    top: -1px;
+    right: -1px;
+    padding: 3px 7px;
+    position: absolute;
+    color: #9DA0A4;
+    border: 1px solid #DDD;
+    border-radius: 4px 0;
+}
+
+.bottom-left {
+    font-weight: 600;
+    background-color: #F5F5F5;
+    font-size: 0.7em;
+    bottom: -1px;
+    left: -1px;
+    padding: 3px 7px;
+    position: absolute;
+    color: #9DA0A4;
+    border: 1px solid #DDD;
+    border-radius: 4px 0;
+}
+
+.bottom-right {
+    font-weight: 600;
+    background-color: #F5F5F5;
+    font-size: 0.7em;
+    bottom: -1px;
+    right: -1px;
+    padding: 3px 7px;
+    position: absolute;
+    color: #9DA0A4;
+    border: 1px solid #DDD;
+    border-radius: 4px 0;
+}
+
+.full-left {
+    font-weight: 600;
+    background-color: #F5F5F5;
+    font-size: 0.7em;
+    top: -1px;
+    bottom: -1px;
+    left: -1px;
+    padding: 3px 7px;
+    position: absolute;
+    color: #9DA0A4;
+    border: 1px solid #DDD;
+    border-radius: 4px 0;
+}
+
+.full-right {
+    font-weight: 600;
+    background-color: #F5F5F5;
+    font-size: 0.7em;
+    top: -1px;
+    bottom: -1px;
+    right: -1px;
+    padding: 3px 7px;
+    position: absolute;
+    color: #9DA0A4;
+    border: 1px solid #DDD;
+    border-radius: 4px 0;
+}
+
+.handler-bar {
+    display: block;
+    width: 5px;
+    height: 1px;
+    border-radius: 1px;
+    margin-top: 4px;
+    background-color: #cccccc;
+}
+
+
+/* --- place holder --- */
+
+::-webkit-input-placeholder {
+    /* WebKit, Blink, Edge */
+    color: #909;
+}
+
+:-moz-placeholder {
+    /* Mozilla Firefox 4 to 18 */
+    color: #909;
+    opacity: 1;
+}
+
+::-moz-placeholder {
+    /* Mozilla Firefox 19+ */
+    color: #909;
+    opacity: 1;
+}
+
+:-ms-input-placeholder {
+    /* Internet Explorer 10-11 */
+    color: #909;
+}
+
+::-ms-input-placeholder {
+    /* Microsoft Edge */
+    color: #909;
+}
+
+/* --- place holder for bootstrap --- */
+
+.form-control::-webkit-input-placeholder {
+    /* WebKit, Blink, Edge */
+    color: silver;
+    font-family: 'Trebuchet MS', sans-serif;
+    font-size: smaller;
+}
+
+.form-control:-moz-placeholder {
+    /* Mozilla Firefox 4 to 18 */
+    color: silver;
+    font-family: 'Trebuchet MS', sans-serif;
+    opacity: 1;
+}
+
+.form-control::-moz-placeholder {
+    /* Mozilla Firefox 19+ */
+    color: silver;
+    font-family: 'Trebuchet MS', sans-serif;
+    opacity: 1;
+}
+
+.form-control:-ms-input-placeholder {
+    /* Internet Explorer 10-11 */
+    color: silver;
+    font-family: 'Trebuchet MS', sans-serif;
+}
+
+.form-control::-ms-input-placeholder {
+    /* Microsoft Edge */
+    color: silver;
+    font-family: 'Trebuchet MS', sans-serif;
+}

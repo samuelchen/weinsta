@@ -45,12 +45,12 @@
             <ul>
               <li><a href=""><i class="fa fa-id-card"></i> {% trans "Profile" %}</a></li>
               <li><a href="{% url 'socialaccount_connections' %}"><i class="fa fa-link"></i> {% trans 'Social Accounts' %}</a></li>
-              <li class="dropdown-divider"></li>
-              <li><a href="{% url 'account_logout' %}"><i class="fa fa-sign-out"></i> {% trans 'Logout' %}</a>
               {% if request.user.is_staff %}
               <li class="dropdown-divider"></li>
               <li><a href="/admin" target="_blank">{% trans 'Admin' %} <i class="fa fa-external-link"></i></a></li>
               {% endif %}
+              <li class="dropdown-divider"></li>
+              <li><a href="{% url 'account_logout' %}"><i class="fa fa-sign-out"></i> {% trans 'Logout' %}</a>
             </ul>
           {% endif %}
           </li>

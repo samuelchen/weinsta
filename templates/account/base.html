@@ -1,0 +1,53 @@
+{% extends "bdgru/base_site.html" %}
+
+{% block stylesheets %}
+  {{ block.super }}
+
+    <style>
+        .wrapper {
+            right: 0px;
+            margin: 0px auto;
+            margin-top: 5%;
+            max-width: 350px;
+            position: relative
+        }
+    </style>
+    {% block extra_head %}{% endblock %}
+{% endblock stylesheets %}
+
+{% block title %}
+    {{ block.super }}
+    {% block head_title %}{% endblock %}
+{% endblock title %}
+
+{% block body_class %}login{% endblock body_class %}
+
+{% block body %}
+      {% include 'bdgru/includes/django-messages-inc.html' %}
+
+    <div class="wrapper">
+        <div class="row text-center">
+            {% block content %}
+            {% endblock content %}
+        </div>
+
+        <div class="clearfix"></div>
+        <br/>
+
+    <hr>
+            <div class="row text-center">
+                <h1><i class="fa fa-space-shuttle"></i> {{ site.name }}</h1>
+                <p>©2018 All Rights Reserved. {{ site.domain }}</p>
+            </div>
+    </div>
+
+
+    {% block javascripts %}
+        {{ block.super }}
+    {% endblock javascripts %}
+{% endblock body %}
+
+{% block extra_body %}
+{% endblock extra_body %}
+
+

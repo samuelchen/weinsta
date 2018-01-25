@@ -46,25 +46,25 @@ urlpatterns = [
     url(r'^accounts/', include('allauth.urls')),
 
     url(r'^$', views.IndexView.as_view(template_name=t('index.html')), name='index'),
-    url(r'^media/$', views.MediaView.as_view(template_name=t('media.html')), name='media'),
-    url(r'^author/$', views.AuthorView.as_view(template_name=t('author.html')), name='author'),
-    url(r'^insta/$', views.InstaView.as_view(template_name=t('insta.html')), name='insta'),
-    url(r'^insta/loc/$', views.InstaLocView.as_view(), name='insta_loc'),
-    url(r'^weibo/$', views. WeiboView.as_view(template_name=t('weibo.html')), name='weibo'),
-    url(r'^twitter/$', views. TwitterView.as_view(template_name=t('twitter.html')), name='twitter'),
-    url(r'^pub/(?P<media_id>[0-9]+)/$', views.PubView.as_view(template_name=t('pub.html')), name='pub'),
+    # url(r'^media/$', views.MediaView.as_view(template_name=t('media.html')), name='media'),
+    # url(r'^author/$', views.AuthorView.as_view(template_name=t('author.html')), name='author'),
+    # url(r'^insta/$', views.InstaView.as_view(template_name=t('insta.html')), name='insta'),
+    # url(r'^insta/loc/$', views.InstaLocView.as_view(), name='insta_loc'),
+    # url(r'^weibo/$', views. WeiboView.as_view(template_name=t('weibo.html')), name='weibo'),
+    # url(r'^twitter/$', views. TwitterView.as_view(template_name=t('twitter.html')), name='twitter'),
+    # url(r'^pub/(?P<media_id>[0-9]+)/$', views.PubView.as_view(template_name=t('pub.html')), name='pub'),
 
     # campaign views
-    url(r'^campaign/$', views.CampaignView.as_view(template_name=t('campaign.html')),
-        name=views.CampaignView.view_name),
-    url(r'^campaign/(?P<id>[0-9]+)/$', views.CampaignView.as_view(template_name=t('campaign.html')),
-        name=views.CampaignView.view_name),
-    url(r'^campaign/(?P<id>[0-9]+)/(?P<action>(update|del|ready|start|done|renew|detail|track|add))/$', views.CampaignView.as_view(
-        template_name=t('campaign.html')), name=views.CampaignView.view_name),
-    url(r'^campaign/(?P<action>new)/$', views.CampaignView.as_view(template_name=t('campaign.html')),
-        name=views.CampaignView.view_name),
-    url(r'^campaign/(?P<id>[0-9]+)/(?P<action>(battle))/(?P<battle_id>[0-9]+)/$', views.CampaignView.as_view(
-        template_name=t('campaign.html')), name=views.CampaignView.view_name),
+    # url(r'^campaign/$', views.CampaignView.as_view(template_name=t('campaign.html')),
+    #     name=views.CampaignView.view_name),
+    # url(r'^campaign/(?P<id>[0-9]+)/$', views.CampaignView.as_view(template_name=t('campaign.html')),
+    #     name=views.CampaignView.view_name),
+    # url(r'^campaign/(?P<id>[0-9]+)/(?P<action>(update|del|ready|start|done|renew|detail|track|add))/$', views.CampaignView.as_view(
+    #     template_name=t('campaign.html')), name=views.CampaignView.view_name),
+    # url(r'^campaign/(?P<action>new)/$', views.CampaignView.as_view(template_name=t('campaign.html')),
+    #     name=views.CampaignView.view_name),
+    # url(r'^campaign/(?P<id>[0-9]+)/(?P<action>(battle))/(?P<battle_id>[0-9]+)/$', views.CampaignView.as_view(
+    #     template_name=t('campaign.html')), name=views.CampaignView.view_name),
 
     # battle & activity views
     # url(r'^campaign/(?P<id>[0-9]+)/(?P<action>(battle|track))/$', views.BattleView.as_view(
@@ -84,5 +84,5 @@ urlpatterns = [
 
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
 
-if settings.DEBUG:
-    urlpatterns.append(url(r'^test/$', views.TestView.as_view(template_name=t('test.html')), name='test'))
+# if settings.DEBUG:
+#     urlpatterns.append(url(r'^test/$', views.TestView.as_view(template_name=t('test.html')), name='test'))

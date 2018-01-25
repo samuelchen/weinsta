@@ -56,6 +56,14 @@ INSTALLED_APPS = [
     'bdgru',
 ]
 
+AUTHENTICATION_BACKENDS = (
+    # Needed to login by username in Django admin, regardless of `allauth`
+    'django.contrib.auth.backends.ModelBackend',
+
+    # `allauth` specific authentication methods, such as login by e-mail
+    'allauth.account.auth_backends.AuthenticationBackend',
+)
+
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
@@ -71,7 +79,7 @@ ROOT_URLCONF = 'weinsta.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [os.path.join(BASE_DIR, 'templates'), os.path.join(BASE_DIR, 'app', 'tpls'), ],
+        'DIRS': [os.path.join(BASE_DIR, 'templates'), ],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -140,13 +148,20 @@ STATIC_URL = '/static/'
 # -------- allauth settings --------
 
 ACCOUNT_USERNAME_MIN_LENGTH = 4
-ACCOUNT_USERNAME_BLACKLIST = ['admin', 'weinsta', 'instgram', 'weibo', 'wechat', 'root', 'staff', 'notification',
-                              'subscription', 'system', 'bill', 'account']
+ACCOUNT_USERNAME_BLACKLIST = ['admin', 'weinsta', 'bdgru', 'instagram', 'weibo', 'wechat', 'root', 'staff',
+                              'notification', 'administrator', 'manager', 'sale', 'billing', 'support'
+                              'subscription', 'system', 'bill', 'account', 'service']
 SOCIALACCOUNT_AUTO_SIGNUP = False
 
 ACCOUNT_AUTHENTICATION_METHOD = "username_email"
 ACCOUNT_EMAIL_REQUIRED = True
 
+ACCOUNT_EMAIL_VERIFICATION = "mandatory"     # "mandatory", "optional", or "none"
+if DEBUG:
+    EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+
+LOGIN_REDIRECT_URL = '/dashboard/'
+ACCOUNT_LOGOUT_REDIRECT_URL = '/'
 
 # -------- added settings --------
 

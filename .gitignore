@@ -5,6 +5,7 @@ data
 temp
 weinsta/migrations
 *.pid
+weinsta_bak
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

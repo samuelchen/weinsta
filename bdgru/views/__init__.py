@@ -3,4 +3,4 @@
 
 from .base import BaseViewMixin, index, gentella_html
 from .index import IndexView
-from .campaign import CampaignView
+from .campaign import CampaignView, CampaignEditView

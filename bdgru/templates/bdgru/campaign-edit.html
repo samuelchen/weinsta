@@ -1,0 +1,110 @@
+{% extends "./base_site.html" %}{% load staticfiles i18n l10n customer_tags %}
+
+{% block title %} {% trans "Campaigns" %} {% endblock title %}
+
+{% block stylesheets %}
+  {{ block.super }}
+{% endblock stylesheets %}
+
+
+{% block content %}
+    <div class="right_col" role="main">
+      <div class="">
+        <div class="page-title">
+          <div class="title_left">
+            <h3>{% trans "Edit Campaign" %}
+                <small><small><a href="{% url 'dash_campaign' id=thecampaign.id %}">
+                    <i class="fa fa-chevron-left"></i> {% trans "Back to Campaigns" %}
+                </a></small></small></h3>
+          </div>
+
+          <div class="title_right">
+            <div class="col-md-5 col-sm-5 col-xs-12 form-group pull-right top_search">
+{#              <div class="input-group">#}
+{#                <input type="text" class="form-control" placeholder="Search for...">#}
+{#                <span class="input-group-btn">#}
+{#                  <button class="btn btn-default" type="button">Go!</button>#}
+{#                </span>#}
+{#              </div>#}
+            </div>
+          </div>
+        </div>
+
+        <div class="clearfix"></div>
+
+        <div class="row">
+
+            <div class="col-md-12 col-sm-12 col-xs-12">
+              <div class="x_panel">
+                <div class="x_title">
+                  <h2>#{{ thecampaign.id }} {{ thecampaign.name }} <small>{{ thecampaign.begin }} - {{ thecampaign.end }}</small></h2>
+                  <ul class="nav navbar-right panel_toolbox">
+                    <li><a class="collapse-link"><i class="fa fa-chevron-up"></i></a>
+                    </li>
+                    <li class="dropdown">
+                      <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false"><i class="fa fa-wrench"></i></a>
+                      <ul class="dropdown-menu" role="menu">
+                        <li><a href="#">Settings 1</a>
+                        </li>
+                        <li><a href="#">Settings 2</a>
+                        </li>
+                      </ul>
+                    </li>
+                    <li><a class="close-link"><i class="fa fa-close"></i></a>
+                    </li>
+                  </ul>
+                  <div class="clearfix"></div>
+                </div>
+                <div class="x_content">
+{#                  <p class="text-muted font-13 m-b-30">#}
+{#                    {% trans "Click a campaign title to select it." %}#}
+{#                  </p>#}
+
+
+                    <form id="id_form_action" action="{% url 'dash_campaign' %}" method="post">
+                        {% csrf_token %}
+                        {% include './includes/campaign-form.html' with campaign=thecampaign target_form="#id_form_action" small=False %}
+                    </form>
+
+                </div>
+              </div>
+            </div>
+
+
+        </div>
+
+
+      </div>
+    </div>
+{% endblock content %}
+
+{% block javascripts %}
+  {{ block.super }}
+
+    <script language="JavaScript">
+        function init_DataTables() {
+
+            if (typeof($.fn.DataTable) === 'undefined') {
+                return;
+            }
+            console.log('init_DataTables');
+
+            $('#datatable-campaign').DataTable({
+                "order": []
+            });
+
+            $('#datatable-battles').DataTable({
+                "paging": false,
+                "searching": false
+            });
+
+        }
+        ;
+
+        $(document).ready(function () {
+            init_DataTables();
+        });
+    </script>
+{% endblock javascripts %}
+
+

@@ -26,29 +26,36 @@ class CampaignView(TemplateView, BaseViewMixin, CampaignFormViewMixin):
         id = kwargs['id'] if 'id' in kwargs else ''
         battle_id = kwargs['battle_id'] if 'battle_id' in kwargs else ''
 
-        if action and action not in ['detail', 'battle']:
+        if action and action not in ['edit', 'battle']:
             return HttpResponseRedirect(reverse(CampaignView.view_name, kwargs={'id': id}))
 
         if id:
-            camp = Campaign.objects.get(id=id)
+            camp = Campaign.objects.get(id=id, user=request.user)
             context['thecampaign'] = camp
 
             if battle_id:
-                battle = Battle.objects.get(id=battle_id)
+                battle = Battle.objects.get(id=battle_id, campaign=camp.id)
                 context['thebattle'] = battle
 
-                # TODO: optimization required. (because activity grows fast)
+            # TODO: optimization required. (because activity grows fast)
+            chart_data = {}
+            labels_done = False
+            for btl in camp.battles.all():
                 data = {}
+                labels = set()
                 for t in ActivityType.Metas.keys():
-                    data[t] = {}
-                    data[t]['data'] = []
-                    data[t]['labels'] = []
+                    data[t] = []
 
-                for act in battle.activities.all():
+                for act in btl.activities.all():
                     label = act.datetime.strftime('%Y-%m-%d %H')
-                    data[act.type]['labels'].append(label)
-                    data[act.type]['data'].append(act.count)
-                context['chart_data'] = data
+                    if not labels_done:
+                        labels.add(label)
+                    data[act.type].append(act.count)
+                chart_data[btl.provider] = data
+                if not labels_done:
+                    chart_data['labels'] = list(sorted(labels))
+                    labels_done = True
+            context['chart_data'] = chart_data
 
         return self.render_to_response(context)
 
@@ -92,5 +99,38 @@ class CampaignView(TemplateView, BaseViewMixin, CampaignFormViewMixin):
         context['campaigns'] = Campaign.objects.filter(user=self.request.user).order_by('-timestamp')
 
         context['disabled_buttons'] = [] if action == 'detail' else ['SAVE', 'RESET']
+
+        return context
+
+
+@method_decorator(login_required, name='dispatch')
+class CampaignEditView(TemplateView, BaseViewMixin, CampaignFormViewMixin):
+
+    view_name = 'dash_campaign_edit'
+
+    def get(self, request, *args, **kwargs):
+        context = self.get_context_data(**kwargs)
+        action = kwargs['action'] if 'action' in kwargs else ''
+        id = kwargs['id'] if 'id' in kwargs else ''
+
+        if id:
+            camp = Campaign.objects.get(id=id, user=request.user)
+            context['thecampaign'] = camp
+
+        return self.render_to_response(context)
+
+    # POST action handled by CampaignView
+
+    def get_context_data(self, **kwargs):
+        context = super(CampaignEditView, self).get_context_data(**kwargs)
+
+        action = kwargs['action'] if 'action' in kwargs else ''
+
+        context['providers'] = SocialProviders
+        context['mediatypes'] = MediaType
+        context['campaignstatus'] = CampaignStatus
+        context['activitytypes'] = ActivityType
+
+        context['disabled_buttons'] = [] if action == 'edit' else ['SAVE', 'RESET']
 
         return context

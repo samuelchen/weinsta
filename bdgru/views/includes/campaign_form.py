@@ -85,13 +85,18 @@ class CampaignFormViewMixin(View):
         camp.name = req.get('camp_name', camp.name)
         camp.text = req.get('camp_text', camp.text)
 
-        t = req.get('camp_begin')
+        t = req.get('camp_duration', '')
         if t:
-            camp.begin = timezone.make_aware(dtparser.parse(t))
-
-        t = req.get('camp_end')
-        if t:
-            camp.end = timezone.make_aware(dtparser.parse(t))
+            t = t.split('-')
+            camp.begin = timezone.make_aware(dtparser.parse(t[0]))
+            camp.end = timezone.make_aware(dtparser.parse(t[1]))
+        # t = req.get('camp_begin')
+        # if t:
+        #     camp.begin = timezone.make_aware(dtparser.parse(t))
+        #
+        # t = req.get('camp_end')
+        # if t:
+        #     camp.end = timezone.make_aware(dtparser.parse(t))
 
         camp.save()
 
@@ -138,7 +143,7 @@ class CampaignFormViewMixin(View):
         # TODO: if ready or in progress
 
         # need to update first
-        self.update_campaign(camp)
+        # self.update_campaign(camp)
 
         request = self.request
         if not camp.providers:
@@ -153,7 +158,7 @@ class CampaignFormViewMixin(View):
 
     def done_campaign(self, camp):
 
-        self.update_campaign(camp)
+        # self.update_campaign(camp)
 
         request = self.request
         log.debug('Marking campaign %s done.' % camp)

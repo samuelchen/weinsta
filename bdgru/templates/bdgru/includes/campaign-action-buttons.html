@@ -1,0 +1,77 @@
+{% load i18n staticfiles %}
+{# Campaign form controlls #}
+{# Vars:  campaign (Campaign Model object) #}
+{#        target_form (form id selector string. e.g. "#id_my_form") #}
+{#        small (bool, optional. default False. Small size control and text.) #}
+{#        disables (list of button names) #}
+{# names of buttons: NEW, DEL, READY, START, DONE, RENEW.  #}
+{# RESET, SAVE are moved to campaign-form #}
+
+            <!-- campaign form action buttons -->
+                    {# new #}
+                    {% if 'NEW' not in disables %}
+                    <li><a id="id_btn_add" title="{% trans "Create" %}"
+                            onclick="$('{{ target_form }}').attr('action','{% url 'dash_campaign' action='new' %}').attr('onsubmit','').submit();">
+                        <i class="fa fa-plus"></i></a></li>
+                    {% endif %}
+
+                {% if campaign %}
+                    {# del #}
+                    {% if 'DEL' not in disables %}
+                    <li><a id="id_btn_del" type="submit" title="{% trans "Delete" %}"
+                        onclick="$('{{ target_form }}').attr('action','{% url 'dash_campaign' id=campaign.id action='del' %}').attr('onsubmit', 'return confirm(\'{% trans "Sure to delete"  %} {{ campaign }}? \');').submit();">
+                        <i class="fa fa-remove"></i></a></li>
+                    {% endif %}
+
+                    {# ready to go #}
+                    {% if 'READY' not in disables %}
+                    {% if campaign.status == campaignstatus.NEW %}
+                        <li><a onclick="$('{{ target_form }}').attr('action','{% url 'dash_campaign' id=campaign.id action='ready' %}').submit();"
+                            type="submit" title="{% trans "Ready to Go" %}">
+                            <i class="fa fa-play-circle-o"></i></a></li>
+                    {% endif %}
+                    {% endif %}
+
+                    {# start #}
+                    {% if 'START' not in disables %}
+                    {% if debug and campaign.status != campaignstatus.IN_PROGRESS and campaign.status != campaignstatus.DONE %}
+                        <li><a onclick="$('{{ target_form }}').attr('action','{% url 'dash_campaign' id=campaign.id action='start' %}').submit();"
+                            type="submit" title="{% trans "Start" %}">
+                            <i class="fa fa-play"></i></a></li>
+                    {% endif %}
+                    {% endif %}
+
+                    {# mark done #}
+                    {% if 'DONE' not in disables %}
+                    {% if campaign.status != campaignstatus.DONE and campaign.status > campaignstatus.NEW %}
+                        <li><a onclick="$('{{ target_form }}').attr('action','{% url 'dash_campaign' id=campaign.id action='done' %}').submit();"
+                            type="submit" title="{% trans "Mark Done" %}">
+                            <i class="fa fa-check-square-o"></i></a></li>
+                    {% endif %}
+                    {% endif %}
+
+                    {# re-new #}
+                    {% if 'RENEW' not in disables %}
+                    {% if campaign.status != campaignstatus.IN_PROGRESS and campaign.status != campaignstatus.NEW %}
+                        <li><a onclick="$('{{ target_form }}').attr('action','{% url 'dash_campaign' id=campaign.id action='renew' %}').attr('onsubmit', 'return confirm(\'{% trans "Sure to RENEW ? All data will be cleaned."  %} \');').submit();"
+                            type="submit" title="{% trans "Renew" %}">
+                            <i class="fa fa-refresh"></i></a></li>
+                    {% endif %}
+                    {% endif %}
+
+                    {% if 'EDIT' not in disables %}
+                        <li><a href="{% url 'dash_campaign_edit' action='edit' id=campaign.id %}"
+                           title="{% trans "Edit" %}"><i class="fa fa-edit"></i></a></li>
+                    {% endif %}
+
+                        {% if debug %}
+                        <li><a id="id_btn_track" type="submit" title="{% trans "Track" %}"
+                                onclick="$('{{ target_form }}').attr('action','{% url 'dash_campaign' id=campaign.id action='track' %}').attr('onsubmit','').submit();">
+                            <i class="fa fa-eye"></i> </a></li>
+                        {% endif %}
+
+
+
+                {% endif %}
+
+            <!-- Campaign form action buttons END -->

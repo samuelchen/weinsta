@@ -1,0 +1,78 @@
+{% extends "./base.html" %}
+
+{% load i18n %}
+{% load account socialaccount %}
+
+{% block title %}{% trans "Sign Up" %}{% endblock %}
+
+{% block stylesheets %}
+  {{ block.super }}
+  <!-- Animate.css -->
+{#  <link href="/static/vendors/animate.css/animate.min.css" rel="stylesheet">#}
+{% endblock stylesheets %}
+
+{% block body_class %}login{% endblock body_class %}
+
+
+{% block body %}
+
+  {% get_providers as socialaccount_providers %}
+  <div>
+{#    <a class="hiddenanchor" id="signup"></a>#}
+{#    <a class="hiddenanchor" id="signin"></a>#}
+
+      {% include 'dashboard/includes/django-messages-inc.html' %}
+
+    <div class="login_wrapper">
+      <div class="animate form login_form">
+        <section class="login_content">
+
+          <form class="signup" id="signup_form" method="post" action="{% url 'account_signup' %}">
+              {% csrf_token %}
+
+            <h1>Create Account</h1>
+            <div>
+              <input id="id_email" name="email" type="email" class="form-control" placeholder="Email" required="" />
+            </div>
+            <div>
+              <input id="id_username" name="username" type="text" class="form-control" placeholder="Username" required="" />
+            </div>
+            <div>
+              <input id="id_password1" name="password1" type="password" class="form-control" placeholder="Password" required="" />
+            </div>
+            <div>
+              <input id="id_password2" name="password2" type="password" class="form-control" placeholder="Password" required="" />
+            </div>
+            <div>
+              <button class="btn btn-default btn-sm submit" type="submit">{% trans "Sign Up" %} &raquo;</button>
+                  {% if redirect_field_value %}
+  <input type="hidden" name="{{ redirect_field_name }}" value="{{ redirect_field_value }}" />
+  {% endif %}
+            </div>
+
+            <div class="clearfix"></div>
+
+            <div class="separator">
+              <p class="change_link">Already a member ?
+                <a href="{% url 'account_login' %}" class="to_register"> Log in </a>
+              </p>
+
+              <div class="clearfix"></div>
+              <br />
+
+              <div>
+                <h1><i class="fa fa-space-shuttle"></i> Gentelella Alela!</h1>
+                <p>©2018 All Rights Reserved. {{ site.domain }}</p>
+              </div>
+            </div>
+          </form>
+
+
+        </section>
+      </div>
+
+    </div>
+  </div>
+
+
+{% endblock %}

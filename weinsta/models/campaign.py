@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 # coding: utf-8
+from collections import OrderedDict
 from django.utils import timezone
 
 from django.contrib.auth import get_user_model
@@ -48,15 +49,15 @@ class CampaignStatus(object):
 
 
 class ActivityType(object):
-    LIKE = 'like'
     COMMENT = 'comment'
+    LIKE = 'like'
     REPOST = 'repost'
 
-    __metas = {
-        LIKE: (LIKE, _('like'), 'fa fa-fw fa-thumbs-o-up'),
-        COMMENT: (COMMENT, _('comment'), 'fa fa-fw fa-comments-o'),
-        REPOST: (REPOST, _('repost'), 'fa fa-fw fa-mail-forward'),
-    }
+    __metas = OrderedDict((
+        (COMMENT, (COMMENT, _('comment'), 'fa fa-fw fa-comments-o')),
+        (LIKE, (LIKE, _('like'), 'fa fa-fw fa-thumbs-o-up')),
+        (REPOST, (REPOST, _('repost'), 'fa fa-fw fa-mail-forward')),
+    ))
 
     Metas = __metas
     Choices = tuple(map(lambda x: (x[0], x[1]), __metas.values()))
@@ -130,7 +131,7 @@ class Battle(models.Model):
         unique_together = ('provider', 'rid')
 
     def latest_activities(self):
-        return Activity.objects.filter(battle=self).order_by('-id')[0:len(ActivityType.Metas)]
+        return Activity.objects.filter(battle=self).order_by('hour', 'type')[0:len(ActivityType.Metas)]
 
 
 # TODO: Activity grows very fast. Need optimization.

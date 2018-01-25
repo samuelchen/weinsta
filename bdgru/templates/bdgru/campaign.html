@@ -1,0 +1,223 @@
+{% extends "./base_site.html" %}{% load staticfiles i18n l10n customer_tags %}
+
+{% block title %} {% trans "Campaigns" %} {% endblock title %}
+
+{% block stylesheets %}
+  {{ block.super }}
+  <link href="{% static 'gentelella/vendors/datatables.net-bs/css/dataTables.bootstrap.min.css' %}" rel="stylesheet">
+  <link href="{% static 'gentelella/vendors/datatables.net-buttons-bs/css/buttons.bootstrap.min.css' %}" rel="stylesheet">
+  <link href="{% static 'gentelella/vendors/datatables.net-fixedheader-bs/css/fixedHeader.bootstrap.min.css' %}" rel="stylesheet">
+  <link href="{% static 'gentelella/vendors/datatables.net-responsive-bs/css/responsive.bootstrap.min.css' %}" rel="stylesheet">
+  <link href="{% static 'gentelella/vendors/datatables.net-scroller-bs/css/scroller.bootstrap.min.css' %}" rel="stylesheet">
+{% endblock stylesheets %}
+
+
+{% block content %}
+    <div class="right_col" role="main">
+      <div class="">
+        <div class="page-title">
+          <div class="title_left">
+            <h3>{% trans "Campaigns" %}</h3>
+          </div>
+
+          <div class="title_right">
+            <div class="col-md-5 col-sm-5 col-xs-12 form-group pull-right top_search">
+              <div class="input-group">
+                <input type="text" class="form-control" placeholder="Search for...">
+                <span class="input-group-btn">
+                  <button class="btn btn-default" type="button">Go!</button>
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="clearfix"></div>
+
+        <div class="row">
+
+            <div class="col-md-12 col-sm-12 col-xs-12">
+              <div class="x_panel">
+                <div class="x_title">
+                  {% if not thecampaign %}
+                  <h2>{% trans "All" %}</h2>
+                  {% else %}
+                  <h2>#{{ thecampaign.id }} {{ thecampaign.name }} <small>{{ thecampaign.begin|default_if_none:'' }} - {{ thecampaign.end|default_if_none:'' }}</small></h2>
+                  {% endif %}
+                  <ul class="nav navbar-right panel_toolbox">
+                      {% include './includes/campaign-action-buttons.html' with campaign=thecampaign target_form="#id_form_action" small=True disables=disabled_buttons %}
+
+                    <li><a class="collapse-link"><i class="fa fa-chevron-up"></i></a>
+                    </li>
+                    <li class="dropdown">
+                      <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false"><i class="fa fa-wrench"></i></a>
+                      <ul class="dropdown-menu" role="menu">
+                        <li><a href="#">Settings 1</a>
+                        </li>
+                        <li><a href="#">Settings 2</a>
+                        </li>
+                      </ul>
+                    </li>
+                    <li><a class="close-link"><i class="fa fa-close"></i></a>
+                    </li>
+                  </ul>
+                  <div class="clearfix"></div>
+                </div>
+                <div class="x_content">
+                  <p class="text-muted font-13 m-b-30">
+                    {% trans "Click a campaign title to select it." %}
+                  </p>
+                  <table id="datatable-campaign" class="table table-striped table-bordered dt-responsive nowrap small" cellspacing="0" width="100%">
+                    <thead>
+                      <tr>
+                        <th>#</th>
+                        <th>Campaign</th>
+                        <th>Status</th>
+                        <th>Begin</th>
+                        <th>End</th>
+                        <th>Channels</th>
+                        <th>Medias</th>
+                        <th>Text</th>
+                      </tr>
+                    </thead>
+
+
+                    <tbody>
+                        {% for camp in campaigns %}
+                        <tr id="id_row_{{ camp.id }}" {% if camp.id == thecampaign.id %}class="warning"{% endif %}>
+                            <th scope="row">{{ camp.id }}</th>
+                            <td><a {% if camp.id != thecampaign.id %}href="{% url 'dash_campaign' camp.id %}"{% endif %} class="link">{{ camp.name }}</a></td>
+                            <td title="{{ camp.get_status_text }}" class="text-center"><i class="{{ camp.get_status_icon }}"></i></td>
+                            <td>{{ camp.begin|default_if_none:''|date:'Y-m-d H:i' }}</td>
+                            <td>{{ camp.end|default_if_none:''|date:'Y-m-d H:i' }}</td>
+                            <td>{% for provider in camp.get_providers %}
+                                    <i class="{% call_with_func_and_args providers 'get_icon' provider %}
+                                    {% if provider in camp.get_started_battles %}text-primary{% else %}text-muted{% endif %}"
+                                             title="{% call_with_func_and_args providers 'get_text' provider %}"></i>
+                                {% endfor %}
+                            </td>
+                            <td>
+                                {% for m in camp.medias.all %}
+                                <img class="mb-1" style="height: 1.2rem; cursor: pointer;" src="{{ m.get_thumb_url }}"
+                                        data-toggle="photo" data-url="{{ m.get_pic_low_url }}"
+                                        data-title="{{ m.text|default_if_none:m.author|default_if_none:'' }}" >
+                                {% endfor %}
+                            </td>
+                            <td>{{ camp.text|default_if_none:''|urlize }}</td>
+                        </tr>
+                        {% endfor %}
+
+                    </tbody>
+                  </table>
+
+
+                </div>
+              </div>
+
+            </div>
+            {% include './includes/photo-viewer.html' %}
+
+            <!-- form -->
+            {% if thecampaign %}
+            <div class="col-md-12 col-sm-12 col-xs-12">
+              <div class="x_panel">
+                <div class="x_title">
+                  <h2>Channels <small>{{ thecampaign.name }}</small></h2>
+                  <ul class="nav navbar-right panel_toolbox">
+                    <li><a class="collapse-link"><i class="fa fa-chevron-up"></i></a>
+                    </li>
+                    <li class="dropdown">
+                      <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false"><i class="fa fa-wrench"></i></a>
+                      <ul class="dropdown-menu" role="menu">
+                        <li><a href="#">Settings 1</a>
+                        </li>
+                        <li><a href="#">Settings 2</a>
+                        </li>
+                      </ul>
+                    </li>
+                    <li><a class="close-link"><i class="fa fa-close"></i></a>
+                    </li>
+                  </ul>
+                  <div class="clearfix"></div>
+                </div>
+                <div class="x_content">
+{#                  <p class="text-muted font-13 m-b-30">#}
+{#                    {% trans "Click a campaign title to select it." %}#}
+{#                  </p>#}
+
+            {% include './includes/campaign-battles.html' with campaign=thecampaign battle=thebattle activitytypes=activitytypes small=True %}
+            {% include './includes/channel-chart.html' with campaign=thecampaign activitytypes=activitytypes chart_data=chart_data %}
+
+            <div class="form-inline form-control-sm">
+                <label for="id_add_battle_url" class="form-control-label mr-2">{% trans "Status url you want to track in campaign." %} : </label>
+                <input id="id_add_battle_url" name="channel_url" type="url" class="form-control col-6">
+                <button onclick="$('#id_form_action').attr('action','{% url 'dash_campaign' id=thecampaign.id action='add' %}');"
+                    type="submit" class="btn btn-outline-primary"><i class="fa fa-eye"></i> {% trans "Add" %}</button>
+
+            </div>
+
+                </div>
+              </div>
+
+            </div>
+            {% endif %}
+
+
+        </div>
+
+        <form id="id_form_action" action="{% url 'dash_campaign' %}" method="post">
+            {% csrf_token %}
+
+        </form>
+      </div>
+    </div>
+{% endblock content %}
+
+{% block javascripts %}
+  {{ block.super }}
+  <!-- Datatables -->
+  <script src="{% static 'gentelella/vendors/datatables.net/js/jquery.dataTables.min.js' %}"></script>
+  <script src="{% static 'gentelella/vendors/datatables.net-bs/js/dataTables.bootstrap.min.js' %}"></script>
+  <script src="{% static 'gentelella/vendors/datatables.net-buttons/js/dataTables.buttons.min.js' %}"></script>
+  <script src="{% static 'gentelella/vendors/datatables.net-buttons-bs/js/buttons.bootstrap.min.js' %}"></script>
+  <script src="{% static 'gentelella/vendors/datatables.net-buttons/js/buttons.flash.min.js' %}"></script>
+  <script src="{% static 'gentelella/vendors/datatables.net-buttons/js/buttons.html5.min.js' %}"></script>
+  <script src="{% static 'gentelella/vendors/datatables.net-buttons/js/buttons.print.min.js' %}"></script>
+  <script src="{% static 'gentelella/vendors/datatables.net-fixedheader/js/dataTables.fixedHeader.min.js' %}"></script>
+  <script src="{% static 'gentelella/vendors/datatables.net-keytable/js/dataTables.keyTable.min.js' %}"></script>
+  <script src="{% static 'gentelella/vendors/datatables.net-responsive/js/dataTables.responsive.min.js' %}"></script>
+  <script src="{% static 'gentelella/vendors/datatables.net-responsive-bs/js/responsive.bootstrap.js' %}"></script>
+  <script src="{% static 'gentelella/vendors/datatables.net-scroller/js/dataTables.scroller.min.js' %}"></script>
+  <script src="{% static 'gentelella/vendors/jszip/dist/jszip.min.js' %}"></script>
+  <script src="{% static 'gentelella/vendors/pdfmake/build/pdfmake.min.js' %}"></script>
+  <script src="{% static 'gentelella/vendors/pdfmake/build/vfs_fonts.js' %}"></script>
+
+  <script src="{% static 'gentelella/vendors/Chart.js/dist/Chart.min.js' %}"></script>
+
+    <script language="JavaScript">
+        function init_DataTables() {
+
+            if (typeof($.fn.DataTable) === 'undefined') {
+                return;
+            }
+            console.log('init_DataTables');
+
+            $('#datatable-campaign').DataTable({
+                "order": []
+            });
+
+            $('#datatable-battles').DataTable({
+                "paging": false,
+                "searching": false
+            });
+
+        }
+        ;
+
+        $(document).ready(function () {
+            init_DataTables();
+        });
+    </script>
+{% endblock javascripts %}
+
+
