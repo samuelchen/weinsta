@@ -1,0 +1,41 @@
+{% load i18n staticfiles %}
+{# Author card (normal size) #}
+{# Vars:  author (SocialUser model object) #}
+
+        {# ----- Author Card (normal size) ----- #}
+        <div class="col-xl-3 col-lg-4 col-md-4 col-sm-6 mt-2">
+            <div class="card mr-2">
+
+                <h6 class="card-header">
+                    <img class=" rounded-circle mr-1" style="width: 38px; height: 38px"
+                         src="{{ author.get_pic_url }}">
+                    {{ author.get_name|default_if_none:'Unknown' }}
+
+                    <i class="{{ author.get_icon }} float-right"  title="@{{ author.username }}" data-toggle="tooltip" style="font-size: x-large;"></i>
+                </h6>
+
+                <div class="card-body">
+
+                    <p class="card-text">{{ author.bio|default_if_none:'&nbsp;' }}</p>
+                    <div>
+                    {% for m in author.posted_media.all %}
+                        <img class="mb-1" style="height: 2.5rem; cursor: pointer;" src="{{ m.get_thumb_url }}"
+                                data-toggle="photo" data-url="{{ m.get_pic_low_url }}"
+                                data-title="{{ m.text|default_if_none:m.author|default_if_none:'' }}" >
+                    {% endfor %}
+                    </div>
+                </div>
+                <div class="card-footer">
+                    <div class="media-body ml-1 mr-1">
+                        {% if author.is_artist %}<span class="badge badge-success" title="artist" data-toggle="tooltip"><i class="fa fa-id-badge"></i></span>{% endif %}
+                        {% if author.is_publisher %}<span class="badge badge-info" title="publisher" data-toggle="tooltip"><i class="fa fa-id-badge"></i></span>{% endif %}
+{#                        <a href="#"><span class="badge badge-secondary" title="@{{ author.username }}" data-toggle="tooltip"><i class="fa fa-{{ author.provider }}"></i></span></a>#}
+                    </div>
+                    <p class="small">
+                        {{ author.website|default_if_none:'' }}
+{#                        <i class="fa fa-{{ author.provider }} float-right"  title="@{{ author.username }}" data-toggle="tooltip" style="font-size: x-large;"></i>#}
+                    </p>
+                </div>
+            </div>
+        </div>
+        {# ----- Author Card (normal size) End ----- #}

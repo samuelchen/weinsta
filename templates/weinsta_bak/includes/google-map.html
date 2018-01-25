@@ -1,0 +1,214 @@
+{% load i18n staticfiles %}
+
+        <div id="id_map" class="mt-2" style="width: 100%; height: 100%; min-height: 300px; min-width:300px;"></div>
+
+
+    {#  be careful to include the parameter "libraries=places"#}
+    <script type="text/javascript" src='http://maps.google.com/maps/api/js?key=AIzaSyDYS0nnnybpedLUQiTXoM4CRCGcmXoMMLI&sensor=false&libraries=places'></script>
+    <script src="{% static 'weinsta/js/gmaps.min.js' %}"></script>
+
+    <script>
+        var map;
+        var init_lat = 30.5833;
+        var init_lng = 114.267;
+{#        var img_width = 32;#}
+
+        if ("geolocation" in navigator) {
+            navigator.geolocation.getCurrentPosition(function (position) {
+                init_lat = position.coords.latitude;
+                init_lng = position.coords.longitude;
+            });
+        } else {
+            console.warn('geolocation is not enabled in this browser.');
+        }
+
+        $(document).ready(function () {
+            $("#id_btn_location").click(function () {
+                GMaps.geocode({
+                    address: $('#id_location').val(),
+                    callback: function (results, status) {
+                        if (status == 'OK') {
+                            var latlng = results[0].geometry.location;
+                            map.setCenter(latlng.lat(), latlng.lng());
+                            load_local_media(latlng.lat(), latlng.lng());
+{#                            map.addMarker({#}
+{#                                lat: latlng.lat(),#}
+{#                                lng: latlng.lng()#}
+{#                            });#}
+                        }
+                    }
+                });
+            });
+
+            map = new GMaps({
+                el: '#id_map',
+                lat: init_lat,
+                lng: init_lng,
+                zoomControl: true,
+                zoomControlOpt: {
+                    style: 'SMALL',
+                    position: 'TOP_LEFT'
+                },
+                panControl: false,
+                streetViewControl: false,
+                mapTypeControl: false,
+                overviewMapControl: false,
+                dragend: function (e) {
+                    var lat = e.data.map.center.lat();
+                    var lng = e.data.map.center.lng();
+                    load_local_media(lat, lng)
+                },
+                click: function(e) {
+                }
+            });
+
+            init_autocomplete();
+
+            load_local_media(init_lat, init_lng);
+        });
+
+        function load_local_media(lat, lng) {
+            $.ajax('/insta/loc/', {
+                data: {
+                    lat: lat,
+                    lng: lng
+                }
+            }).done(function (data) {
+                if (data && data.data && data.data.length > 0) {
+                    $("#id_medias").html('');
+                    $(data.data).each(function (idx) {
+                        var m = data.data[idx];
+                        {#                                console.log(idx);#}
+                        {#                                console.log(m);#}
+                        add_media(m);
+                        {#                                map.addMarker({#}
+                        {#                                    lat: m.location.latitude,#}
+                        {#                                    lng: m.location.longitude,#}
+                        {#                                    title: m.caption ? m.caption.text : m.location.name,#}
+                        {#                                    icon: {#}
+                        {#                                        url: m.images.thumbnail.url,#}
+                        {#                                        size: {#}
+                        {#                                            width: img_width,#}
+                        {#                                            height: img_width / m.images.thumbnail.width * m.images.thumbnail.height#}
+                        {#                                        }#}
+                        {#                                    },#}
+                        {#                                                                        infoWindow: {#}
+                        {#                                                                        content: '<p><img src="{0}" style="width:{1};height{2}"></p>'.f(#}
+                        {#                                                                                m.images.thumbnail.url, img_width, img_width / m.images.thumbnail.width * m.images.thumbnail.height#}
+                        {#                                                                        )#}
+                        {#                                                                        },#}
+                        {#                                    click: function (e) {#}
+                        {#                                        alert('You clicked in this marker');#}
+                        {#                                    }#}
+                        {#                                });#}
+                    });
+                }
+            }).fail(function (data) {
+                console.log('error ');
+                console.log(data);
+            });
+        }
+
+        function add_media(media_obj){
+            var m = media_obj;
+            var tmpl = heredoc(function(){/*!!!
+                    <div class="card small mr-2" style="width: {8}rem;" title="{1} - @{3}" data-toggle="tooltip">
+                        {6}<img class="card-img-top" src="{0}" alt="{1}">{7}
+                                                <div class="bottom-right">@{3}</div>
+
+{#                        <div class="card-body small">#}
+{#                            <h6 class="card-title" title="{% trans "Media Owner" %}" data-toggle="tooltip">#}
+{#                                <img class=" rounded-circle mr-1" style="width: 1.3rem; height: 1.3rem"#}
+{#                                 src="{2}">#}
+{#                                {3} <i class="fa fa-instagram"></i>#}
+{#                            </h6>#}
+
+{#                            <p class="card-text">{4}</p>#}
+{#                            <a href="{5}" title="{% trans "View on" %} Instagram"#}
+{#                               target="_blank" data-toggle="tooltip" class="btn btn-primary btn-sm">#}
+{#                                <i class="fa fa-instagram"></i> {% trans "View" %}</a>#}
+{#                        </div>#}
+                     </div>
+             */});
+            var url = m.images.thumbnail.url;
+            var text = m.caption ? m.caption.text: '';
+            var owner = m.user.username; //m.user.full_name ? m.user.full_name : m.user.username;
+            var owner_pic = m.user.profile_picture;
+            var link = m.link;
+            var video_a = m.type == 'video' ? '<a href="#" class="video">': '';
+            var video_a_close = m.type == 'video' ? '</a>': '';
+
+            var html = tmpl.f(url, text, owner_pic, owner, text, link, video_a, video_a_close, '7');
+            $("#id_medias").append(html);
+        }
+
+
+        function init_autocomplete() {
+
+            // Create the search box and link it to the UI element.
+            var input = document.getElementById('id_location');
+            var searchBox = new google.maps.places.SearchBox(input);
+{#            map.controls[google.maps.ControlPosition.TOP_LEFT].push(input);#}
+
+            // Bias the SearchBox results towards current map's viewport.
+            map.addListener('bounds_changed', function () {
+                searchBox.setBounds(map.getBounds());
+            });
+
+            var markers = [];
+            // Listen for the event fired when the user selects a prediction and retrieve
+            // more details for that place.
+            searchBox.addListener('places_changed', function () {
+                var places = searchBox.getPlaces();
+
+                if (places.length == 0) {
+                    return;
+                }
+
+                // Clear out the old markers.
+                map.removeMarkers(markers)
+{#                markers.forEach(function (marker) {#}
+{#                    marker.setMap(null);#}
+{#                });#}
+                markers = [];
+
+                // For each place, get the icon, name and location.
+                var bounds = new google.maps.LatLngBounds();
+                places.forEach(function (place) {
+                    if (!place.geometry) {
+                        console.log("Returned place contains no geometry");
+                        return;
+                    }
+                    var icon = {
+                        url: place.icon,
+                        size: new google.maps.Size(71, 71),
+                        origin: new google.maps.Point(0, 0),
+                        anchor: new google.maps.Point(17, 34),
+                        scaledSize: new google.maps.Size(25, 25)
+                    };
+
+                    // Create a marker for each place.
+{#                    markers.push(new google.maps.Marker({#}
+{#                        map: map,#}
+{#                        icon: icon,#}
+{#                        title: place.name,#}
+{#                        position: place.geometry.location#}
+{#                    }));#}
+
+                    markers.push(map.addMarker({
+                        icon: icon,
+                        title: place.name,
+                        position: place.geometry.location
+                    }));
+
+                    if (place.geometry.viewport) {
+                        // Only geocodes have viewport.
+                        bounds.union(place.geometry.viewport);
+                    } else {
+                        bounds.extend(place.geometry.location);
+                    }
+                });
+                map.fitBounds(bounds);
+            });
+        }
+    </script>

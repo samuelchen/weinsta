@@ -1,0 +1,79 @@
+{# Bootstrap 3 message tips by Using Django message middleware #}
+{#  JQuery required #}
+
+<!-- BEGIN message & error -->
+        <div id="id_messages">
+        </div>
+
+<script language="Javascript">
+
+    var _MSG_LEVELS = {
+        debug: {{ DEFAULT_MESSAGE_LEVELS.DEBUG }},
+        info: {{ DEFAULT_MESSAGE_LEVELS.INFO }},
+        warn: {{ DEFAULT_MESSAGE_LEVELS.WARNING }},
+        warning: {{ DEFAULT_MESSAGE_LEVELS.WARNING }},
+        error: {{ DEFAULT_MESSAGE_LEVELS.ERROR }},
+        success: {{ DEFAULT_MESSAGE_LEVELS.SUCCESS }}
+    };
+
+    {# bootstrap classes. change it if use another framework #}
+    var _MSG_CLASS = {
+        debug: "alert-info",
+        info: "alert-info",
+        warn: "alert-warning",
+        warning: "alert-warning",
+        error: "alert-danger",
+        success: "alert-success"
+    };
+
+    var _MSG_DIV_TEMPLATE = '<div id="{0}" class="alert alert-dismissible {1}">\
+        <button type="button" class="close" data-dismiss="alert">×</button>\
+        <strong>{2}</strong>\
+        <div>\
+        {3}\
+        </div>\
+    </div>';
+
+{#  // KEEP: add .format to String if required (put it to your main .js) #}
+    String.prototype.format = String.prototype.f = function () {
+        var s = this,
+                i = arguments.length;
+
+        while (i--) {
+            s = s.replace(new RegExp('\\{' + i + '\\}', 'gm'), arguments[i]);
+        }
+        return s;
+    };
+
+    function _msg(msg, level, title, clear) {
+        var box = $("#id_messages");
+        var div_id = "id_messages_" + level;
+        var div = $("#" + div_id);
+
+        if (level=="error" && !title) title = "Oops!";
+        if (title == undefined || title == null) title = "";
+
+        if (!div.length) {
+            box.append(_MSG_DIV_TEMPLATE.f(div_id, _MSG_CLASS[level], title, msg+"<br>"));
+        } else {
+            if (clear) {div.find("div").html('');}
+            div.find("div").append(msg+"<br>");
+        }
+    }
+
+    function _info(msg, clear) { _msg(msg, 'info', '', clear); }
+    function _warn(msg, clear) { _msg(msg, 'warn', '', clear); }
+    function _error(msg, clear) { _msg(msg, 'error', '', clear); }
+    function _success(msg, clear) { _msg(msg, 'success', '', clear); }
+
+    {% for msg in messages %} _msg('{{ msg|safe }}', "{{ msg.level_tag }}");
+    {% endfor %}
+    {% if form.errors %}
+        {% for error in form.non_field_errors %} _error('{{ error|force_escape }}');
+        {% endfor %}
+        {% for field in form %}{% for error in field.errors %} _error('{{ error|force_escape }}');
+        {% endfor %}{% endfor %}
+    {% endif %}
+
+</script>
+<!-- END message & error -->

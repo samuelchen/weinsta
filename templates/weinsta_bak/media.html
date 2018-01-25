@@ -1,0 +1,57 @@
+{% extends "base.html" %}{% load staticfiles i18n %}
+
+{% block head_title %}{% trans "Media" %} - {% endblock %}
+
+{% block extra_head %}
+{% endblock %}
+
+{% block content %}
+
+    {% include 'weinsta/includes/tabs.html' %}
+    <div class="row pl-1">
+    {% for m in medias %}
+        {% with media=m.media %}
+        {% include 'weinsta/includes/media-card.html' %}
+{#        <div class="">#}
+{#            <div class="card mr-1" style="width: 12rem;">#}
+{#                <a href="#" class=" {% if media.type == mediatypes.VIDEO %}video{% endif %}">#}
+{#                <img class="card-img-top {% if media.type == mediatypes.VIDEO %}video{% endif %}"#}
+{#                     src="{{ media.get_thumb_url }}" alt="{{ media.text|default_if_none:'' }}">#}
+{#                </a>#}
+{#                <div class="card-body small">#}
+{#                    <h6 class="card-title" title="{% trans "Media Owner" %}" data-toggle="tooltip">#}
+{#                        <img class="rounded-circle mr-1" style="width: 1.3rem; height: 1.3rem"#}
+{#                         src="{{ media.owner.get_pic_url }}">#}
+{#                        {{ media.owner|default_if_none:'Unknown' }} <i class="fa fa-{{ media.owner.provider }}"></i>#}
+{#                    </h6>#}
+{##}
+{#                    {% if media.author and media.author != media.owner %}#}
+{#                    <p class="card-text" data-toggle="tooltip"#}
+{#                       title="{% trans "Media Author (display only if owner is probably not the author)" %}">#}
+{#                        <img class="rounded-circle mr-1" style="width: 1rem; height: 1rem"#}
+{#                         src="{{ media.author.get_pic_url }}">#}
+{#                        {{ media.author}} <i class="fa fa-{{ media.author.provider }}"></i>#}
+{#                    {% endif %}#}
+{##}
+{#                    <p class="card-text" title="{% trans "Mentioned/related people in media" %}" data-toggle="tooltip">#}
+{#                        {% for u in media.mentions.all %}#}
+{#                        <img class="rounded-circle mr-1" style="width: 1rem; height: 1rem"#}
+{#                             title="{{ u.username }}" src="{{ u.get_pic_url }}">#}
+{#                        {% endfor %}#}
+{#                    </p>#}
+{##}
+{#                    <p class="card-text">{{ media.text|default_if_none:'&nbsp;' }}</p>#}
+{#                    <a href="{{ media.rlink }}" title="{% trans "View on" %} {{ media.provider|capfirst }}"#}
+{#                       target="_blank" data-toggle="tooltip" class="btn btn-outline-primary btn-sm">#}
+{#                        <i class="fa fa-{{ media.provider }}"></i> {% trans "View" %}</a>#}
+{#                    <a href="{% url 'pub' media.id %}" title="{% trans "Publish to ..." %}"#}
+{#                       target="_blank" data-toggle="tooltip" class="btn btn-outline-primary btn-sm">#}
+{#                        <i class="fa fa-share-alt"></i> {% trans "Publish" %}</a>#}
+{#                </div>#}
+{#            </div>#}
+{#        </div>#}
+        {% endwith %}
+    {% endfor %}
+    </div>
+
+{% endblock %}

@@ -1,0 +1,101 @@
+{% load i18n staticfiles %}
+{# Campaign form controlls #}
+{# Vars:  campaign (Campaign Model object) #}
+{#        target_form (form id selector string. e.g. "#id_my_form") #}
+{#        small (bool, optional. default False. Small size control and text.) #}
+{#        disables (list of button names) #}
+{# names of buttons: NEW, DEL, READY, START, DONE, RENEW.  #}
+{# RESET, SAVE are moved to campaign-form #}
+
+            <!-- campaign form action buttons -->
+            <div class="btn-toolbar" role="toolbar" aria-label="Actions for campaigns">
+                <div class="{% if small %}btn-group-sm{% else %}btn-group{% endif %} mr-2" role="group" aria-label="Actions">
+                    {# new #}
+                    {% if 'NEW' not in disables %}
+                    <button id="id_btn_add" class="btn btn-outline-primary" type="submit"
+                            onclick="$('{{ target_form }}').attr('action','{% url 'campaign' action='new' %}').attr('onsubmit','');">
+                        <i class="fa fa-plus"></i> {% trans "Create" %}</button>
+                    {% endif %}
+                </div>
+
+                {% if campaign %}
+                    <div class="{% if small %}btn-group-sm{% else %}btn-group{% endif %} mr-2" role="group" aria-label="Form">
+                        {# del #}
+                        {% if 'DEL' not in disables %}
+                        <button id="id_btn_del" class="btn btn-outline-primary" type="submit"
+                            onclick="$('{{ target_form }}').attr('action','{% url 'campaign' id=campaign.id action='del' %}').attr('onsubmit', 'return confirm(\'{% trans "Sure to delete"  %} {{ campaign }}? \');');">
+                            <i class="fa fa-remove text-danger"></i> {% trans "Delete" %}</button>
+                        {% endif %}
+                        {# reset #}
+{#                        {% if 'RESET' not in disables %}#}
+{#                        <button type="reset" class="btn btn-outline-primary"><i class="fa fa-undo"></i> {% trans "Reset Form" %}</button>#}
+{#                        {% endif %}#}
+                        {# save #}
+{#                        {% if 'SAVE' not in disables %}#}
+{#                        {% if campaign.status < campaignstatus.READY %}#}
+{#                        <button onclick="$('{{ target_form }}').attr('action','{% url 'campaign' id=campaign.id action='update' %}');"#}
+{#                            type="submit" class="btn btn-outline-primary"><i class="fa fa-save"></i> {% trans "Save" %}</button>#}
+{#                        {% endif %}#}
+{#                        {% endif %}#}
+                    </div>
+
+                    <div class="{% if small %}btn-group-sm{% else %}btn-group{% endif %} mr-2" role="group" aria-label="Campaign Status">
+                    {# ready to go #}
+                    {% if 'READY' not in disables %}
+                    {% if campaign.status == campaignstatus.NEW %}
+                        <button onclick="$('{{ target_form }}').attr('action','{% url 'campaign' id=campaign.id action='ready' %}');"
+                            type="submit" class="btn btn-outline-primary"><i class="fa fa-play-circle-o text-success"></i> {% trans "Ready to Go" %}</button>
+                    {% endif %}
+                    {% endif %}
+
+                    {# start #}
+                    {% if 'START' not in disables %}
+                    {% if debug and campaign.status != campaignstatus.IN_PROGRESS and campaign.status != campaignstatus.DONE %}
+                        <button onclick="$('{{ target_form }}').attr('action','{% url 'campaign' id=campaign.id action='start' %}');"
+                            type="submit" class="btn btn-outline-primary"><i class="fa fa-play text-success"></i> {% trans "Start" %}</button>
+                    {% endif %}
+                    {% endif %}
+
+                    {# mark done #}
+                    {% if 'DONE' not in disables %}
+                    {% if campaign.status != campaignstatus.DONE %}
+                        <button onclick="$('{{ target_form }}').attr('action','{% url 'campaign' id=campaign.id action='done' %}');"
+                            type="submit" class="btn btn-outline-primary"><i class="fa fa-check-square-o text-secondary"></i> {% trans "Mark Done" %}</button>
+                    {% endif %}
+                    {% endif %}
+
+                    {# re-new #}
+                    {% if 'RENEW' not in disables %}
+                    {% if campaign.status != campaignstatus.IN_PROGRESS and campaign.status != campaignstatus.NEW %}
+                        <button onclick="$('{{ target_form }}').attr('action','{% url 'campaign' id=campaign.id action='renew' %}');"
+                            type="submit" class="btn btn-outline-primary"><i class="fa fa-refresh text-secondary"></i> {% trans "Renew" %}</button>
+                    {% endif %}
+                    {% endif %}
+                    </div>
+
+                    {% if 'DETAIL' not in disables %}
+                    <div class="{% if small %}btn-group-sm{% else %}btn-group{% endif %} mr-2" role="group" aria-label="Links">
+                        {% if action == 'detail' %}
+                        <a class="btn btn-primary" href="{% url 'campaign' id=campaign.id %}">
+                            <i class="fa fa-list"></i> {% trans "Channels" %}
+                        </a>
+                        {% else %}
+                        <a class="btn btn-primary" href="{% url 'campaign' action='detail' id=campaign.id %}">
+                            <i class="fa fa-list-alt"></i> {% trans "Detail" %}
+                        </a>
+                        {% endif %}
+
+                        {% if debug %}
+                        <button id="id_btn_track" class="btn btn-primary" type="submit"
+                                onclick="$('{{ target_form }}').attr('action','{% url 'campaign' id=campaign.id action='track' %}').attr('onsubmit','');">
+                            <i class="fa fa-eye"></i> {% trans "Track" %}</button>
+                        {% endif %}
+                    {% endif %}
+                    </div>
+
+
+
+                {% endif %}
+
+            </div>
+            <!-- Campaign form action buttons END -->

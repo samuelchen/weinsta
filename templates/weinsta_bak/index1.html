@@ -1,0 +1,33 @@
+{% extends "base.html" %}{% load staticfiles i18n %}
+
+{% block head_title %}{% trans "Home" %} - {% endblock %}
+
+{% block extra_head %}
+{% endblock %}
+
+{% block content %}
+    <!-- medias -->
+    <div id="id_medias" class="row pl-1 mt-2">
+    {% for media in medias %}
+        <div class="">
+            <div class="card mr-2" style="width: 12rem;">
+                <img class="card-img-top" src="{{ media.images.thumbnail.url }}" alt="{{ media.caption.text|default_if_none:'' }}">
+
+                <div class="card-body small">
+                    <h6 class="card-title" title="{% trans "Media Owner" %}" data-toggle="tooltip">
+                        <img class=" rounded-circle mr-1" style="width: 1.3rem; height: 1.3rem"
+                         src="{{ media.user.profile_picture }}">
+                        {{ media.user.username|default_if_none:'Unknown' }} <i class="fa fa-instagram"></i>
+                    </h6>
+
+                    <p class="card-text">{{ media.caption.text|default_if_none:'&nbsp;' }}</p>
+                    <a href="{{ media.link }}" title="{% trans "View on" %} Instagram"
+                       target="_blank" data-toggle="tooltip" class="btn btn-primary btn-sm">
+                        <i class="fa fa-instagram"></i> {% trans "View" %}</a>
+                </div>
+            </div>
+        </div>
+    {% endfor %}
+    </div>
+    <!-- media ends -->
+{% endblock %}

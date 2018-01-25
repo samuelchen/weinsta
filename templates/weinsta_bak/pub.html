@@ -1,0 +1,119 @@
+{% extends "base.html" %}{% load staticfiles i18n %}
+
+{% block head_title %}{% trans "Home" %} - {% endblock %}
+
+{% block extra_head %}
+{% endblock %}
+
+{% block content %}
+    <!-- publish media -->
+    <div class="row">
+        <div class="col-md-5 col-lg-4 col-xl-3">
+            <div class="card mr-2">
+
+                <h6 class="card-header" title="{% trans "Media Owner" %}" data-toggle="tooltip">
+                    <img class=" rounded-circle mr-1" style="width: 38px; height: 38px"
+                         src="{{ media.owner.get_pic_url }}">
+                    {{ media.owner|default_if_none:'Unknown' }}
+                </h6>
+
+                <img class="card-img-top"
+                     src="{{ media.get_pic_high_url }}"
+                     alt="{{ media.text|default_if_none:'' }}">
+
+                <div class="card-body">
+
+                    <p class="card-text">{{ media.text|default_if_none:'&nbsp;' }}</p>
+
+                </div>
+                <div class="card-footer">
+                    <p class="small">{{ media.created_at }}
+                    <i class="fa fa-{{ media.owner.provider }} float-right" style="font-size: x-large;"></i></p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-5">
+            <form id="id_form_publish" method="post">
+                {% csrf_token %}
+                <div class="form-group">
+                    <label for="id_owner">Author</label>
+                    <input type="text" class="form-control" id="id_owner" name="owner" aria-describedby="id_owner_help"
+                           placeholder="Enter owner username" value="{{ media.owner.username }}">
+                    <small id="id_owner_help" class="form-text text-muted">
+                        The owner holds the copyright of the media.
+                    </small>
+                </div>
+                {#            <div class="form-group">#}
+                {#                <label for="id_provider">Provider (platform)</label>#}
+                {#                <input type="text" class="form-control" id="id_provider" value="{{ media.provider }}">#}
+                {#            </div>#}
+                <div class="form-group">
+                    <label for="id_text">Text</label>
+                    <textarea class="form-control" id="id_text" name="text"
+                          placeholder="Enter the text you want to post.">{{ media.text|default_if_none:'' }}</textarea>
+{#                    <label class="custom-control custom-checkbox">#}
+{#                        <input name="translate" type="checkbox" class="custom-control-input">#}
+{#                        <span class="custom-control-indicator"></span>#}
+{#                        <span class="custom-control-description">Translate</span>#}
+{#                    </label>#}
+                </div>
+                <div id="id_targets" class="form-check">
+                    <label for="">Publish to: </label>
+                    {% for provider, text in providers.Choices %}
+                        {% if provider != media.provider and provider != providers.UNKNOWN %}
+                        <label class="custom-control custom-checkbox">
+                            <input name="{{ provider }}" type="checkbox" class="custom-control-input">
+                            <span class="custom-control-indicator"></span>
+                            <span class="custom-control-description"><i
+                                    class="fa fa-{{ provider }}"></i> {{ text }}</span>
+                        </label>
+                        {% endif %}
+                    {% endfor %}
+                </div>
+                <button id="id_btn_publish" type="button" class="btn btn-primary">Publish</button>
+                <button id="id_btn_preview" type="button" class="btn btn-primary">Preview</button>
+            </form>
+            <div id="id_preview" class="card mt-2" style="display:none;">
+{#                <div class="card-header">#}
+{#                    <p>weibo preview</p>#}
+{#                </div>#}
+                <div class="card-body">
+                <p id="id_weibo_preview" class="mt-2"></p>
+                <img class="mt-2" src=""></div>
+            </div>
+        </div>
+    </div>
+    <!-- publish media ends -->
+{% endblock %}
+
+{% block script %}
+    <script language="JavaScript">
+    $("document").ready(function(){
+        $("#id_btn_preview").click(function () {
+            preview();
+        });
+
+        $("#id_btn_publish").click(function() {
+            var form = $("#id_form_publish");
+            if (form.find("#id_targets").find("input:checked").length > 0) {
+                $(this).addClass("disable");
+                form.submit();
+            } else {
+                _error('{% trans "You must specify at least 1 target platform to publish." %}');
+                form.find("#id_targets").find(":checkbox").closest("label").addClass('text-danger');
+            }
+        });
+    });
+
+    function preview(){
+        var div = $("#id_preview");
+        var owner = $("#id_owner").val();
+        var text = $("#id_text").val();
+        var provider = "{{ media.provider }}";
+        var weibo_html = '{1} #{2}# <a href="http://instagram.com/{3}">网页链接</a> <br> {0}'.f(text, owner, provider, owner);
+        div.show();
+        div.find("img").attr("src", "{{ media.thumb.url }}");
+        div.find("#id_weibo_preview").html(weibo_html);
+    }
+    </script>
+{% endblock %}

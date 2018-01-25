@@ -1,0 +1,148 @@
+{% load i18n staticfiles model_tags %}
+{# Media selection page/panel #}
+{# Vars:  target_box (jquery selector of target container to place added medias #}
+{#        mediatypes (MediaTypes class) #}
+{#        sel_medias (list of selected medias . only available shen sel=True. #}
+{#        sel_media_ids (list of selected media ids (int) . only available shen sel=True. #}
+{#              sel_medias OR sel_media_ids only need 1. #}
+{# Names: sel_media (checkbox) #}
+
+
+{# ----- Media selection ----- #}
+
+        <!-- media selection modal trigger -->
+        <a style="cursor:pointer;" data-toggle="modal" data-target="#id_modal_media_sel" class="ml-2 text-primary">
+            <i class="fa fa-plus-square mr-1"></i>
+            <span class="small">{% trans "Add medias" %}</span>
+        </a>
+        <a style="cursor:pointer;" id="id_link_remove_media" class="ml-2 text-primary">
+            <i class="fa fa-minus-square mr-1"></i>
+            <span class="small">{% trans "Remove unchecked medias" %}</span>
+        </a>
+
+        <!-- media selection modal -->
+        <div class="modal fade" id="id_modal_media_sel" tabindex="-1" role="dialog" aria-labelledby="id_modal_media_sel_title"
+             aria-hidden="true">
+            <div class="modal-dialog modal-lg" role="document">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="id_modal_media_sel_title">Select Medias to Add</h5>
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                    <div class="modal-body">
+                        <div id="id_media_selection_error">
+
+                        </div>
+                        <!-- media selection list -->
+                        <div id="id_media_selection" class="form-row">
+{#                            {% for media in page %}#}
+{#                                {% include 'weinsta/includes/media-card.html' with sel=True %}#}
+{#                            {% endfor %}#}
+                        </div>
+                        <!-- media selection list end -->
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                        <button id="id_modal_media_sel_btn_add" type="button" class="btn btn-primary">Add medias</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+
+        <script language="JavaScript">
+            $(document).ready(function(){
+
+                // selected media id Array
+
+                var sel_medias = {% if sel_media_ids %} [].concat({{ sel_media_ids }})
+                        {% elif sel_medias %} [{% for m in sel_medias %}{{ m.id }},{% endfor %}]
+                        {% else %} [] {% endif %};
+                console.debug('seleted medias', sel_medias);
+
+                // container of medias for selection
+                var media_selection_modal_box = $("#id_media_selection");
+
+                // container of selected medias. passed in from "target_box" template var.
+                var selected_medias_box = $("{{ target_box }}");
+
+                // flag if media already loaded from backend.
+                var media_selection_loaded = false;
+
+                // template for a media item
+                var media_tpl = '<div>' +
+                        '<div class="card mr-1 mt-1" name="sel_media">' +
+                            '<a href="#" class="{0}" title="{2} - @{4}" onclick="$(this).next().find(\'input\').click();">' +
+                                '<img class="card-img-top {0}" style="width: 7rem" src="{1}" alt="{2}"></a>' +
+                            '<div class="card-text small top-left-t">' +
+                                '<label class="custom-control custom-checkbox ml-2 mt-2">' +
+                                '<input name="sel_media" type="checkbox" class="custom-control-input" value="{3}">' +
+                                '<span class="custom-control-indicator"></span>' +
+                                '<span class="custom-control-description"></span>' +
+                            '</label>' +
+                        '</div></div>';
+
+                $('#id_modal_media_sel').on('show.bs.modal', function (e) {
+
+                    // fetch backend medias when modal shows
+
+                    var url = "{% url 'rest_medias' %}";
+                    console.debug('medias are already loaded = ' + media_selection_loaded);
+                    if (!media_selection_loaded) {
+                        $.getJSON(url, '', function(resp){
+                            $(resp).each(function(idx, obj){
+                                var video_cls = obj.type == '{{ mediatypes.VIDEO }}' ? 'video' : '';
+                                var h = media_tpl.f(video_cls, obj.url, obj.text, obj.id, obj.owner.name);
+                                if (sel_medias.indexOf(Number(obj.id)) < 0) {
+                                    media_selection_modal_box.append(h);
+                                }
+                            });
+                            media_selection_loaded = true
+
+                        }).fail(function(err){
+                            console.error(err);
+                            $("#id_media_selection_error").html('<span class="text-danger">' + err.status + ' ' + err.statusText
+                            + '</span><br><pre class="small">' + err.responseText + '</pre>');
+                        });
+                    };
+
+                }).on('hidden.bs.modal', function(e) {
+                    // clear error info when hidden
+                    $("#id_media_selection_error").html('');
+                });
+
+                // add button clicked to move checked medias to "target_box"
+                $("#id_modal_media_sel_btn_add").click(function(){
+                    console.log('click');
+                    var selected = media_selection_modal_box.find('input[name="sel_media"]:checked');
+                    console.log(selected);
+{#                    sel_medias = sel_medias.concat(selected.map(function () {return this.value;}).get());#}
+
+                    selected.parents('div[name="sel_media"]').appendTo(selected_medias_box);
+                });
+
+                // remove medias from "target_box" if checkbox clicked.
+{#                selected_medias_box.find('input[name="sel_media"]').click(function(e){#}
+{#                    if(!$(this).is(':checked')) {#}
+{#                        var id = Number( $(this).val());#}
+{#                        var idx = sel_medias.indexOf(id);#}
+{#                        sel_medias.splice(idx, 1);#}
+{##}
+{#                        $(this).parents('div[name="sel_media"]').appendTo(media_selection_modal_box);#}
+{#                    }#}
+{#                });#}
+
+                $("#id_link_remove_media").click(function(){
+                    var selected = selected_medias_box.find('input[name="sel_media"]:not(:checked)');
+{#                    selected.removeAttr('checked');#}
+                    selected.parents('div[name="sel_media"]').appendTo(media_selection_modal_box);
+                });
+
+            });
+
+        </script>
+
+{# ----- Media selection End ----- #}
+

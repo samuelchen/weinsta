@@ -1,0 +1,281 @@
+{% extends "base.html" %}{% load staticfiles i18n l10n customer_tags %}
+
+{% block head_title %}{% trans "Activities of" %} "{{ thecampaign }}" - {% endblock %}
+
+{% block extra_head %}
+
+{% endblock %}
+
+{% block content %}
+
+
+    <div class="container-fluid">
+        <form id="id_form_action" action="{% url 'campaign' %}" method="post">
+            {% csrf_token %}
+
+        {% include 'weinsta/includes/photo-viewer.html' %}
+
+        <!-- action buttons -->
+        <div class="btn-toolbar" role="toolbar" aria-label="Actions for campaigns">
+            <div class="btn-group mr-2" role="group" aria-label="Actions">
+            <button id="id_btn_track" class="btn btn-outline-primary" type="submit"
+                    onclick="$('#id_form_action').attr('action','{% url 'activity' id=thecampaign.id action='track' %}').attr('onsubmit','');">
+                <i class="fa fa-eye"></i> {% trans "Track" %}</button>
+            </div>
+            {% if thecampaign %}
+                <div class="btn-group mr-2" role="group" aria-label="Form">
+                    <button id="id_btn_del" class="btn btn-outline-primary" type="submit"
+                        onclick="$('#id_form_action').attr('action','{% url 'campaign' id=thecampaign.id action='del' %}').attr('onsubmit', 'return confirm(\'{% trans "Sure to delete"  %} {{ thecampaign }}? \');');">
+                        <i class="fa fa-remove text-danger"></i> {% trans "Delete" %}</button>
+                    <button type="reset" class="btn btn-outline-primary"><i class="fa fa-undo"></i> {% trans "Reset Form" %}</button>
+                    {% if thecampaign.status < campaignstatus.READY %}
+                    <button onclick="$('#id_form_action').attr('action','{% url 'campaign' id=thecampaign.id action='update' %}');"
+                        type="submit" class="btn btn-outline-primary"><i class="fa fa-save"></i> {% trans "Save" %}</button>
+                    {% endif %}
+                </div>
+
+                <div class="btn-group mr-2" role="group" aria-label="Campaign Status">
+                {% if thecampaign.status == campaignstatus.NEW %}
+                    <button onclick="$('#id_form_action').attr('action','{% url 'campaign' id=thecampaign.id action='ready' %}');"
+                        type="submit" class="btn btn-outline-primary"><i class="fa fa-play-circle-o text-success"></i> {% trans "Ready to Go" %}</button>
+                {% endif %}
+
+                {% if debug and thecampaign.status != campaignstatus.IN_PROGRESS and thecampaign.status != campaignstatus.DONE %}
+                    <button onclick="$('#id_form_action').attr('action','{% url 'campaign' id=thecampaign.id action='start' %}');"
+                        type="submit" class="btn btn-outline-primary"><i class="fa fa-play text-success"></i> {% trans "Start" %}</button>
+                {% endif %}
+
+                {% if thecampaign.status != campaignstatus.DONE %}
+                    <button onclick="$('#id_form_action').attr('action','{% url 'campaign' id=thecampaign.id action='done' %}');"
+                        type="submit" class="btn btn-outline-primary"><i class="fa fa-check-square-o text-secondary"></i> {% trans "Mark Done" %}</button>
+                {% endif %}
+
+                {% if thecampaign.status != campaignstatus.IN_PROGRESS and thecampaign.status != campaignstatus.NEW %}
+                    <button onclick="$('#id_form_action').attr('action','{% url 'campaign' id=thecampaign.id action='renew' %}');"
+                        type="submit" class="btn btn-outline-primary"><i class="fa fa-refresh text-secondary"></i> {% trans "Renew" %}</button>
+                {% endif %}
+                </div>
+
+            {% endif %}
+
+        </div>
+        <!-- action buttons END -->
+
+
+        {% if thecampaign %}{% with camp=thecampaign %}
+        <!-- campaign editor form -->
+        <div id="id_editor" class="mt-2">
+            <div class="card card-body">
+
+                <!-- name/title -->
+                <div class="form-group row">
+                    <label for="id_camp_name" class="col-md-2 col-form-label">Campaign Name:</label>
+                    <div class="col-md-10">
+                        <input id="id_camp_name" name="name" type="text" class="form-control"
+                               value="{{ camp.name }}" placeholder="e.g. Christmas big sale">
+                    </div>
+                </div>
+
+                <!-- providers -->
+                <div class="form-group row">
+                    <label for="" class="col-md-2 col-form-label">Publish to: </label>
+                    <div class="col-md-10 form-inline">
+                    {% with sel_providers=camp.get_providers %}
+                    {% for provider, meta in providers.Metas.items %}
+                    {% if meta.3 %} {# meta.3 (bool) - means if you can publish on this provider #}
+                        <div class="input-group">
+                            <label class="custom-control custom-checkbox">
+                                <input name="sel_provider" type="checkbox" class="custom-control-input"
+                                       {% if provider in sel_providers %}checked{% endif %}
+                                       value="{{ provider }}">
+                                <span class="custom-control-indicator"></span>
+                                <span class="custom-control-description">
+                                    <i class="{{ meta.2 }}"></i> {{ meta.1 }}</span>
+                            </label>
+                        </div>
+                    {% endif %}
+                    {% endfor %}
+                    {% endwith %}
+                    </div>
+                </div>
+
+                <!-- text -->
+                <div class="form-group row">
+                    <label for="id_text" class="col-md-2 col-form-label">Campaign Text:</label>
+                    <div class="col-md-10">
+                        <textarea id="id_text" name="text" class="form-control" rows="3"
+                              placeholder="e.g. Get latest iPhone with 50% discount.
+    Only 3 days at http://bdgru.com.
+    Follow @bdgru on twitter.">{{ camp.text|default_if_none:'' }}</textarea>
+                        <small class="form-text text-muted"><span id="id_txt_cnt">15</span>
+                            ({% trans "Count of chars. Limited on some channels." %})
+                            <a href="#"><i class="fa fa-question-circle"></i> help</a></small>
+                    </div>
+                </div>
+
+                <!-- Begin/End datetime -->
+                {# TODO: verify the datetime timezone #}
+                <div class="form-group row">
+                    <div class="col-sm">
+                        <label for="id_begin" class="col-form-label">{% trans "Begin at" %}:</label>
+                        <input class="form-control" type="datetime-local" value="{{ camp.begin|date:'Y-m-d\TH:i:s' }}"
+                               id="id_begin" name="begin">
+                    </div>
+                    <div class="col-sm">
+                        <label for="id_end" class="col-form-label">{% trans "End by" %}:</label>
+                        <input class="form-control" type="datetime-local" value="{{ camp.end|date:'Y-m-d\TH:i:s' }}"
+                               id="id_end" name="end">
+                    </div>
+                </div>
+
+                <!-- medias -->
+                <div class="form-group">
+                    <label for="" class="col-form-label">Selected medias:</label>
+
+                    <div id="id_selected_medias" class="input-group">
+                        {% for media in camp.medias.all %}
+                            {% include 'weinsta/includes/media-card.html' with sel=True media=media mediatypes=mediatypes sel_medias=camp.medias.all %}
+                        {% endfor %}
+                    </div>
+                    <small class="form-text text-muted"> ({% trans "Weibo: MUST 1 media. Twitter: Max 9 medias." %})
+                    <a href="#"><i class="fa fa-question-circle"></i> help</a></small></small>
+                    {% include 'weinsta/includes/media-selection.html' with target_box="#id_selected_medias" sel_medias=camp.medias.all %}
+
+                </div>
+
+            </div>
+        </div>
+        <!-- Campaign editor form END -->
+        {% endwith %}{% endif %}
+
+        </form>
+
+
+        <!-- Battles -->
+        <table class="table table-responsive table-striped table-sm table-hover table-bordered mt-2 small">
+            <thead>
+            <tr>
+                <th class="d-md-table-cell d-none">#</th>
+                <th>Provider</th>
+                <th>Started</th>
+                <th>Finished</th>
+                <th colspan="3" class="text-center">Activities</th>
+            </tr>
+            </thead>
+            <tbody>
+            {% for battle in battles.all %}
+            <tr id="id_row_{{ battle.id }}">
+                <th scope="row" class="d-md-table-cell d-none">{{ battle.id }}</th>
+                <td><a href="#"><i class="{% call_with_func_and_args providers 'get_icon' provider %}"></i> {{ battle.provider }}</a></td>
+                <td>{{ battle.started }}</td>
+                <td>{{ battle.finished }}</td>
+{#                <td colspan="2"></td>#}
+{#            </tr>#}
+{#            <tr>#}
+{#                <td colspan="4" rowspan="4">#}
+{#                </td>#}
+{#                <th>Type</th>#}
+{#                <th>Count</th>#}
+                {% for activity in battle.latest_activities %}
+                <td>
+                    <i class="{% call_with_func_and_args activitytypes 'get_icon' activity.type %}"></i> {% call_with_func_and_args activitytypes 'get_text' activity.type %}
+                    {{ activity.count }}
+                </td>
+                {% endfor %}
+            </tr>
+
+            {% endfor %}
+
+            </tbody>
+        </table>
+        <!-- battles END -->
+
+            <canvas id="myChart"></canvas>
+
+        <div style="height:400px;" class="row">
+            {% for t, meta in activitytypes.Metas.items %}
+            <div class="col-lg-4">
+                <canvas id="chart_{{ t }}"></canvas>
+            </div>
+            {% endfor %}
+        </div>
+
+    </div>
+
+{% endblock %}
+
+
+{% block script %}
+    <script src="{% static 'weinsta/js/Chart.min.js' %}"></script>
+    <script language="JavaScript">
+
+        function draw_chart(canvas_id) {
+            var ctx = document.getElementById(canvas_id).getContext('2d');
+            var chart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: ["Red", "Blue", "Yellow", "Green", "Purple", "Orange"],
+                    datasets: [{
+                        label: '# of Votes',
+                        data: [12, 19, 3, 5, 2, 3],
+                        backgroundColor: [
+{#                            'rgba(255, 99, 132, 0.2)',#}
+{#                            'rgba(54, 162, 235, 0.2)',#}
+{#                            'rgba(255, 206, 86, 0.2)',#}
+{#                            'rgba(75, 192, 192, 0.2)',#}
+{#                            'rgba(153, 102, 255, 0.2)',#}
+                            'rgba(255, 159, 64, 0.2)'
+                        ],
+                        borderColor: [
+{#                            'rgba(255,99,132,1)',#}
+{#                            'rgba(54, 162, 235, 1)',#}
+{#                            'rgba(255, 206, 86, 1)',#}
+{#                            'rgba(75, 192, 192, 1)',#}
+{#                            'rgba(153, 102, 255, 1)',#}
+                            'rgba(255, 159, 64, 1)'
+                        ],
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    scales: {
+                        yAxes: [{
+                            ticks: {
+                                beginAtZero: true
+                            }
+                        }]
+                    }
+                }
+            });
+        }
+
+        {% for t, meta in activitytypes.Metas.items %}
+            draw_chart("chart_{{ t }}");
+        {% endfor %}
+
+{#        $(document).ready(function(){#}
+{#            var data = {#}
+{#                labels : ["January","February","March","April","May","June","July"],#}
+{#                datasets : [#}
+{#                    {#}
+{#                        fillColor : "rgba(220,220,220,0.5)",#}
+{#                        strokeColor : "rgba(220,220,220,1)",#}
+{#                        pointColor : "rgba(220,220,220,1)",#}
+{#                        pointStrokeColor : "#fff",#}
+{#                        data : [65,59,90,81,56,55,40]#}
+{#                    },#}
+{#                    {#}
+{#                        fillColor : "rgba(151,187,205,0.5)",#}
+{#                        strokeColor : "rgba(151,187,205,1)",#}
+{#                        pointColor : "rgba(151,187,205,1)",#}
+{#                        pointStrokeColor : "#fff",#}
+{#                        data : [28,48,40,19,96,27,100]#}
+{#                    }#}
+{#                ]#}
+{#            };#}
+{##}
+{#            var ctx = $("#myChart").get(0).getContext("2d");#}
+{#            var myNewChart = new Chart(ctx).PolarArea(data, options);#}
+{#        });#}
+    </script>
+{% endblock %}
